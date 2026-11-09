@@ -21,3 +21,6 @@ app/flask_session/
 
 # Logs de atividade dos usuários (gerados em runtime)
 logs/
+
+# Preferencias de novidades (geradas em runtime)
+data/novidades_prefs.json

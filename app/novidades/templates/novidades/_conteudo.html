@@ -1,0 +1,249 @@
+{# Conteúdo das novidades. Usado na tela /novidades e no modal do base.html. #}
+<style>
+    .nov-wrap { --nov-navy: #072d66; --nov-teal: #12b0a0; }
+
+    .nov-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1rem;
+        padding: 2.5rem 2rem;
+        color: #fff;
+        background: linear-gradient(120deg, #041c40 0%, var(--nov-navy) 45%, #0b7f8f 100%);
+        box-shadow: 0 1rem 2rem rgba(7, 45, 102, .25);
+    }
+
+    .nov-hero::after {
+        content: "";
+        position: absolute;
+        inset: -40% -20% auto auto;
+        width: 460px;
+        height: 460px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(18, 176, 160, .45) 0%, rgba(18, 176, 160, 0) 70%);
+        pointer-events: none;
+    }
+
+    .nov-hero > * { position: relative; z-index: 1; }
+
+    .nov-selo {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: var(--nov-teal);
+        color: #04262b;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        font-size: .72rem;
+        padding: .3rem .7rem;
+        border-radius: 999px;
+    }
+
+    .nov-titulo {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 800;
+        margin: .75rem 0 .25rem;
+        line-height: 1.1;
+    }
+
+    .nov-chamada { font-size: 1.1rem; opacity: .92; max-width: 52rem; }
+
+    .nov-cta {
+        background: var(--nov-teal);
+        border: none;
+        color: #04262b;
+        font-weight: 700;
+        padding: .7rem 1.4rem;
+        border-radius: .6rem;
+        box-shadow: 0 .4rem 1rem rgba(18, 176, 160, .4);
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .nov-cta:hover {
+        color: #04262b;
+        transform: translateY(-2px);
+        box-shadow: 0 .6rem 1.4rem rgba(18, 176, 160, .55);
+    }
+
+    .nov-pill {
+        display: inline-block;
+        background: rgba(255, 255, 255, .14);
+        border: 1px solid rgba(255, 255, 255, .25);
+        border-radius: 999px;
+        padding: .25rem .75rem;
+        font-size: .82rem;
+        margin: .25rem .25rem 0 0;
+    }
+
+    .nov-card {
+        height: 100%;
+        border: 1px solid #e3e8ef;
+        border-radius: .85rem;
+        padding: 1.1rem;
+        background: #fff;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .nov-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1.2rem rgba(7, 45, 102, .12);
+    }
+
+    .nov-card i {
+        font-size: 1.5rem;
+        color: var(--nov-navy);
+        margin-bottom: .5rem;
+    }
+
+    .nov-card h6 { font-weight: 700; color: var(--nov-navy); margin-bottom: .35rem; }
+    .nov-card p { font-size: .9rem; color: #52606d; margin: 0; }
+
+    .nov-passo {
+        display: flex;
+        gap: .75rem;
+        align-items: flex-start;
+        margin-bottom: .6rem;
+    }
+
+    .nov-passo span {
+        flex: 0 0 1.6rem;
+        height: 1.6rem;
+        border-radius: 50%;
+        background: var(--nov-navy);
+        color: #fff;
+        font-weight: 700;
+        font-size: .85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .nov-card, .nov-cta { transition: none; }
+    }
+</style>
+
+<div class="nov-wrap">
+
+    <!-- Chamada principal -->
+    <div class="nov-hero">
+        <span class="nov-selo"><i class="fas fa-bolt"></i> Novo no Atlas</span>
+        <h2 class="nov-titulo">Expansion 3D</h2>
+        <p class="nov-chamada">
+            Visualização tridimensional georreferenciada dos alimentadores de média tensão
+            do <strong>Interplan</strong>. Carregue o <code class="text-white">rede.mdb</code>
+            e percorra o traçado sobre o modelo digital de terreno, a altura da vegetação,
+            as edificações e os eixos de via — SP e ES, pelo navegador.
+        </p>
+
+        <div class="mt-3">
+            <span class="nov-pill"><i class="fas fa-mountain me-1"></i> MDT 30 m (Copernicus)</span>
+            <span class="nov-pill"><i class="fas fa-tree me-1"></i> Altura da vegetação ~1 m</span>
+            <span class="nov-pill"><i class="fas fa-city me-1"></i> Edificações e eixos de via</span>
+            <span class="nov-pill"><i class="fas fa-satellite me-1"></i> Ortoimagem ou base OSM</span>
+        </div>
+
+        <div class="mt-4 d-flex flex-wrap gap-2 align-items-center">
+            <a href="{{ expansion_url }}" target="_blank" rel="noopener" class="btn nov-cta">
+                <i class="fas fa-cube me-2"></i>Abrir o Expansion 3D
+            </a>
+            <small class="text-white-50">
+                <i class="fas fa-external-link-alt me-1"></i>abre em nova aba — {{ expansion_url }}
+            </small>
+        </div>
+    </div>
+
+    <!-- Recursos -->
+    <h5 class="mt-4 mb-3 fw-bold" style="color:#072d66;">
+        <i class="fas fa-star me-2"></i>Recursos
+    </h5>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="nov-card">
+                <i class="fas fa-project-diagram"></i>
+                <h6>Alimentador representado por elemento</h6>
+                <p>Subestação, postes, vãos, transformadores de distribuição, cabines de
+                   cliente MT, chaves, religadores, reguladores de tensão, bancos de
+                   capacitores e geração distribuída, em camadas independentes.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="nov-card">
+                <i class="fas fa-bolt-lightning"></i>
+                <h6>Condutores por bitola e fases</h6>
+                <p>Traçado dos vãos com a seção nominal e o arranjo de fases
+                   (monofásico, bifásico ou trifásico) de cada trecho; chaves com
+                   estado aberta/fechada e bloco de origem.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="nov-card">
+                <i class="fas fa-tree"></i>
+                <h6>Afastamento condutor–vegetação</h6>
+                <p>Distância vertical mínima entre o condutor e a copa das árvores em
+                   cada vão, classificada em contato provável, crítico e atenção. Triagem
+                   para priorização de poda, sujeita a confirmação em campo.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="nov-card">
+                <i class="fas fa-diagram-project"></i>
+                <h6>Rede compacta (spacer cable)</h6>
+                <p>Seções de 50, 70 e 185 mm² com a geometria do arranjo: cabo mensageiro,
+                   três fases em losango de 0,45 m e espaçadores a cada 9 m.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="nov-card">
+                <i class="fas fa-share-nodes"></i>
+                <h6>Acervo de redes da equipe</h6>
+                <p>O <code>rede.mdb</code> publicado fica disponível para todos, indexado por
+                   subestação, alimentador e região (SP/ES), com filtro e busca.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="nov-card">
+                <i class="fas fa-street-view"></i>
+                <h6>Conferência do ponto selecionado</h6>
+                <p>Do elemento selecionado — poste, transformador ou chave — abre-se
+                   diretamente o Google Street View da coordenada.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Uso -->
+    <div class="row g-3 mt-1">
+        <div class="col-lg-7">
+            <div class="nov-card">
+                <h6 class="mb-3"><i class="fas fa-play me-2"></i>Como usar</h6>
+                <div class="nov-passo">
+                    <span>1</span>
+                    <div>Acesse <strong>Expansion 3D</strong> pelo menu do Atlas.</div>
+                </div>
+                <div class="nov-passo">
+                    <span>2</span>
+                    <div>Selecione uma rede do acervo ou publique o <code>rede.mdb</code>
+                         do seu estudo, com nome e descrição.</div>
+                </div>
+                <div class="nov-passo">
+                    <span>3</span>
+                    <div>Na primeira rede de cada região há a carga do terreno, da vegetação e
+                         das edificações; nas seguintes o acesso é imediato.</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="nov-card">
+                <h6 class="mb-2"><i class="fas fa-circle-info me-2"></i>Premissas</h6>
+                <p class="mb-2">Leitura do <code>rede.mdb</code> em modo somente leitura: o
+                   estudo no Interplan não é alterado.</p>
+                <p class="mb-2">Escopo restrito à média tensão; a baixa tensão não é
+                   representada.</p>
+                <p class="mb-0">Georreferenciamento em SIRGAS 2000, UTM 23S em SP e 24S
+                   em ES. Dúvidas e sugestões: equipe DDPE.</p>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -210,7 +210,7 @@
                                             {{ form.dem_carga_atual_fp.label(class="form-label") }}
                                             <span class="required">*</span>
                                             <div class="input-group">
-                                                {{ form.dem_carga_atual_fp(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="6", default=0) }}
+                                                {{ form.dem_carga_atual_fp(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="10", default=0) }}
                                                 <span class="input-group-text">kW</span>
                                             </div>
                                             {% if form.dem_carga_atual_fp.errors %}
@@ -225,7 +225,7 @@
                                             {{ form.dem_carga_atual_p.label(class="form-label") }}
                                             <span class="required">*</span>
                                             <div class="input-group">
-                                                {{ form.dem_carga_atual_p(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="6", default=0) }}
+                                                {{ form.dem_carga_atual_p(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="10", default=0) }}
                                                 <span class="input-group-text">kW</span>
                                             </div>
                                             {% if form.dem_carga_atual_p.errors %}
@@ -245,7 +245,7 @@
                                             {{ form.dem_carga_solicit_fp.label(class="form-label") }}
                                             <span class="required">*</span>
                                             <div class="input-group">
-                                                 {{ form.dem_carga_solicit_fp(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="6", default=0) }}
+                                                 {{ form.dem_carga_solicit_fp(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="10", default=0) }}
                                                 <span class="input-group-text">kW</span>
                                             </div>
                                             {% if form.dem_carga_solicit_fp.errors %}
@@ -260,7 +260,7 @@
                                             {{ form.dem_carga_solicit_p.label(class="form-label") }}
                                             <span class="required">*</span>
                                             <div class="input-group">
-                                                 {{ form.dem_carga_solicit_p(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="6", default=0) }}
+                                                 {{ form.dem_carga_solicit_p(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="10", default=0) }}
                                                 <span class="input-group-text">kW</span>
                                             </div>
                                             {% if form.dem_carga_solicit_p.errors %}
@@ -286,7 +286,7 @@
                                             {{ form.dem_ger_atual_fp.label(class="form-label") }}
                                             <span class="required">*</span>
                                             <div class="input-group">
-                                                {{ form.dem_ger_atual_fp(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="6", default=0) }}
+                                                {{ form.dem_ger_atual_fp(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="10", default=0) }}
                                                 <span class="input-group-text">kW</span>
                                             </div>
                                             {% if form.dem_ger_atual_fp.errors %}
@@ -301,7 +301,7 @@
                                             {{ form.dem_ger_atual_p.label(class="form-label") }}
                                             <span class="required">*</span>
                                             <div class="input-group">
-                                                {{ form.dem_ger_atual_p(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="6", default=0) }}
+                                                {{ form.dem_ger_atual_p(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="10", default=0) }}
                                                 <span class="input-group-text">kW</span>
                                             </div>
                                             {% if form.dem_ger_atual_p.errors %}
@@ -321,7 +321,7 @@
                                             {{ form.dem_ger_solicit_fp.label(class="form-label") }}
                                             <span class="required">*</span>
                                             <div class="input-group">
-                                                {{ form.dem_ger_solicit_fp(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="6", default=0) }}
+                                                {{ form.dem_ger_solicit_fp(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="10", default=0) }}
                                                 <span class="input-group-text">kW</span>
                                             </div>
                                             {% if form.dem_ger_solicit_fp.errors %}
@@ -336,7 +336,7 @@
                                             {{ form.dem_ger_solicit_p.label(class="form-label") }}
                                             <span class="required">*</span>
                                             <div class="input-group">
-                                                {{ form.dem_ger_solicit_p(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="6", default=0) }}
+                                                {{ form.dem_ger_solicit_p(class="form-control limit-length", type="number", step="0.01", min="0", maxlength="10", default=0) }}
                                                 <span class="input-group-text">kW</span>
                                             </div>
                                             {% if form.dem_ger_solicit_p.errors %}
@@ -829,6 +829,11 @@
 {% block extra_js %}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+<!-- Mesmo script da tela de cadastro: mapa, selects em cascata, coordenadas e
+     circuitos próximos. Define os handlers no seu próprio document.ready. -->
+<script src="{{url_for('cadastro.static', filename='js/localizacao_functions.js') }}"></script>
+
 <script>
 
 function removerAcentos(str) {
@@ -846,279 +851,10 @@ $(document).ready(function() {
         }
     });
 
-    // Valores iniciais do banco ou padrão
-    var initialLat = parseFloat($('#latitude').val()) || -23.550520;
-    var initialLng = parseFloat($('#longitude').val()) || -46.633309;
+    // Mapa, cascata de selects (EDP -> regional -> município/responsável),
+    // normalização de coordenadas e circuitos próximos vêm do
+    // js/localizacao_functions.js, o mesmo do cadastro.
 
-    var map = L.map('map').setView([initialLat, initialLng], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    var marker = L.marker([initialLat, initialLng], {draggable: true}).addTo(map);
-
-    // Tenta centralizar no local atual do usuário se os campos estiverem vazios
-    if (!$('#latitude').val() || !$('#longitude').val()) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                var lat = position.coords.latitude;
-                var lng = position.coords.longitude;
-
-                $('#latitude').val(lat.toFixed(8));
-                $('#longitude').val(lng.toFixed(8));
-
-                marker.setLatLng([lat, lng]);
-                map.setView([lat, lng], 15);
-            });
-        }
-    }
-
-    // Atualiza campos ao arrastar marcador
-    marker.on('dragend', function(e) {
-        var pos = marker.getLatLng();
-        $('#latitude').val(pos.lat.toFixed(8));
-        $('#longitude').val(pos.lng.toFixed(8));
-    });
-
-    // Atualiza marcador e campos ao clicar no mapa
-    map.on('click', function(e) {
-        marker.setLatLng(e.latlng);
-        $('#latitude').val(e.latlng.lat.toFixed(8));
-        $('#longitude').val(e.latlng.lng.toFixed(8));
-    });
-
-    // Função para atualizar marcador a partir dos inputs
-    function updateMarkerFromInput() {
-        var lat = parseFloat($('#latitude').val());
-        var lng = parseFloat($('#longitude').val());
-        if (!isNaN(lat) && !isNaN(lng)) {
-            marker.setLatLng([lat, lng]);
-            map.setView([lat, lng], 13);
-        }
-    }
-
-    $('#latitude, #longitude').on('change', updateMarkerFromInput);
-
-    // Corrige mapa ao abrir a aba
-    $('#localizacao-tab').on('shown.bs.tab', function() {
-        map.invalidateSize();
-    });
-
-    $('#municipio-select').change(function() {
-        var nomeMunicipio = $('#municipio-select option:selected').text();
-        var nomeEstado = $('#edp-select option:selected').text();
-
-        if (nomeMunicipio) {
-            // Buscar todos os municípios do Brasil
-            $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + nomeEstado + '/municipios', function(data) {
-                // Procurar pelo município escolhido (comparação case-insensitive)
-                var municipio = data.find(function(m) {
-                    return removerAcentos(m.nome) === removerAcentos(nomeMunicipio);
-                });
-                console.log(municipio);
-                if (municipio) {
-
-                    $.getJSON('https://servicodados.ibge.gov.br/api/v4/malhas/municipios/' + municipio.id + '/metadados', function(data) {
-                        var data = data[0]
-                        console.log(data.centroide.longitude);
-                        var lat = (data.centroide.latitude !== undefined ? data.centroide.latitude : -23.550520);
-                        var lng = (data.centroide.longitude !== undefined ? data.centroide.longitude : -46.633309);
-
-                        var popupContent = `
-                            <div style="
-                                width: 280px;
-                                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                                color: #333;
-                                line-height: 1.4;
-                                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                                border-radius: 12px;
-                                padding: 0;
-                                overflow: hidden;
-                                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                            ">
-                                <!-- Header -->
-                                <div style="
-                                    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-                                    color: white;
-                                    padding: 16px;
-                                    text-align: center;
-                                    position: relative;
-                                ">
-                                    <div style="
-                                        position: absolute;
-                                        top: -10px;
-                                        right: -10px;
-                                        width: 40px;
-                                        height: 40px;
-                                        background: rgba(255,255,255,0.2);
-                                        border-radius: 50%;
-                                        opacity: 0.3;
-                                    "></div>
-                                    <h3 style="
-                                        margin: 0;
-                                        font-size: 18px;
-                                        font-weight: 600;
-                                        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-                                    ">📍 ${municipio.nome}</h3>
-                                    <p style="
-                                        margin: 4px 0 0 0;
-                                        font-size: 13px;
-                                        opacity: 0.9;
-                                        font-weight: 400;
-                                    ">${municipio.microrregiao.mesorregiao.UF.nome}</p>
-                                </div>
-
-                                <!-- Content -->
-                                <div style="padding: 16px;">
-                                    <!-- Info Grid -->
-                                    <div style="
-                                        display: grid;
-                                        gap: 12px;
-                                        margin-bottom: 16px;
-                                    ">
-                                        <div style="
-                                            display: grid;
-                                            grid-template-columns: 1fr 1fr;
-                                            gap: 8px;
-                                        ">
-                                            <div style="
-                                                background: white;
-                                                padding: 10px;
-                                                border-radius: 6px;
-                                                text-align: center;
-                                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                            ">
-                                                <div style="
-                                                    font-size: 10px;
-                                                    color: #6b7280;
-                                                    text-transform: uppercase;
-                                                    font-weight: 600;
-                                                    margin-bottom: 2px;
-                                                ">Latitude</div>
-                                                <div style="
-                                                    font-size: 12px;
-                                                    color: #374151;
-                                                    font-weight: 500;
-                                                    font-family: 'Courier New', monospace;
-                                                ">${lat.toFixed(6)}</div>
-                                            </div>
-                                            <div style="
-                                                background: white;
-                                                padding: 10px;
-                                                border-radius: 6px;
-                                                text-align: center;
-                                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                            ">
-                                                <div style="
-                                                    font-size: 10px;
-                                                    color: #6b7280;
-                                                    text-transform: uppercase;
-                                                    font-weight: 600;
-                                                    margin-bottom: 2px;
-                                                ">Longitude</div>
-                                                <div style="
-                                                    font-size: 12px;
-                                                    color: #374151;
-                                                    font-weight: 500;
-                                                    font-family: 'Courier New', monospace;
-                                                ">${lng.toFixed(6)}</div>
-                                            </div>
-                                        </div>
-
-                                        <div style="
-                                            background: white;
-                                            padding: 12px;
-                                            border-radius: 8px;
-                                            border-left: 4px solid #f59e0b;
-                                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                        ">
-                                            <div style="
-                                                font-size: 11px;
-                                                color: #6b7280;
-                                                text-transform: uppercase;
-                                                font-weight: 600;
-                                                margin-bottom: 2px;
-                                                letter-spacing: 0.5px;
-                                            ">Área Total</div>
-                                            <div style="
-                                                font-size: 14px;
-                                                color: #374151;
-                                                font-weight: 600;
-                                            ">${data.area.dimensao.toLocaleString('pt-BR')} ${data.area.unidade.nome}</div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Região Limítrofe -->
-                                    <div style="
-                                        background: white;
-                                        padding: 12px;
-                                        border-radius: 8px;
-                                        border-left: 4px solid #8b5cf6;
-                                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                                    ">
-                                        <div style="
-                                            font-size: 11px;
-                                            color: #6b7280;
-                                            text-transform: uppercase;
-                                            font-weight: 600;
-                                            margin-bottom: 8px;
-                                            letter-spacing: 0.5px;
-                                            display: flex;
-                                            align-items: center;
-                                            gap: 4px;
-                                        ">
-                                            <span>🗺️</span> Região Limítrofe
-                                        </div>
-                                        <div style="
-                                            max-height: 100px;
-                                            overflow-y: auto;
-                                            padding-right: 4px;
-                                        ">
-                                            ${data["regiao-limitrofe"].map((p, index) => `
-                                                <div style="
-                                                    background: #f8fafc;
-                                                    padding: 6px 8px;
-                                                    margin-bottom: 4px;
-                                                    border-radius: 4px;
-                                                    font-size: 11px;
-                                                    color: #475569;
-                                                    border: 1px solid #e2e8f0;
-                                                ">
-                                                    <span style="font-weight: 500;">Ponto ${index + 1}:</span>
-                                                    <span style="font-family: 'Courier New', monospace;">
-                                                        ${p.latitude.toFixed(4)}, ${p.longitude.toFixed(4)}
-                                                    </span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-
-                        // Atualiza marcador e mapa
-                        marker.setLatLng([lat, lng]);
-                        marker.bindPopup(popupContent);
-                        marker.openPopup();
-                        map.setView([lat, lng], 12);
-
-                        // Atualiza campos do formulário
-                        $('#latitude').val(lat.toFixed(8));
-                        $('#longitude').val(lng.toFixed(8));
-
-                    }).fail(function() {
-                        console.error("Erro ao buscar metadados do municipio");
-                        });
-
-                } else {
-                    console.error("Município não encontrado na API do IBGE");
-                }
-            }).fail(function() {
-                console.error("Erro ao buscar municípios");
-            });
-        }
-    });
     // Pesquisa cliente por numero de Instalacao
     $('#instalacao').change(function() {
         var instalacao_value=$(this).val();
@@ -1171,62 +907,6 @@ $(document).ready(function() {
     });
 
 
-    // Filtros dinâmicos baseados na EDP selecionada
-    $('#edp-select').change(function() {
-        var edpId = $(this).val();
-        if (edpId) {
-            // Carregar municípios
-            $.get('/api/municipios/' + edpId, function(data) {
-                var municipioSelect = $('#municipio-select');
-                municipioSelect.empty().append('<option value="0">Selecione um município...</option>');
-                $.each(data.municipios, function(index, municipio) {
-                    municipioSelect.append('<option value="' + municipio.id + '">' + municipio.nome + '</option>');
-                });
-                municipioSelect.trigger('change');
-            });
-            
-            // Carregar regionais
-            $.get('/api/regionais/' + edpId, function(data) {
-                var regionalSelect = $('#regional-select');
-                regionalSelect.empty().append('<option value="0">Selecione uma regional...</option>');
-                $.each(data.regionais, function(index, regional) {
-                    regionalSelect.append('<option value="' + regional.id + '">' + regional.nome + '</option>');
-                });
-                regionalSelect.trigger('change');
-            });
-        } else {
-            $('#municipio-select').empty().append('<option value="0">Selecione um município...</option>').trigger('change');
-            $('#regional-select').empty().append('<option value="0">Selecione uma regional...</option>').trigger('change');
-        }
-    });
-    
-    // Carregar responsáveis baseado na regional
-    $('#regional-select').change(function() {
-        var regionalId = $(this).val();
-        console.log(regionalId)
-
-        if (regionalId) {
-            $.get('/api/municipios_by_regional/' + regionalId, function(data) {
-                var municipioSelect = $('#municipio-select');
-                municipioSelect.empty().append('<option value="0">Selecione um município...</option>');
-                $.each(data.municipios, function(index, municipio) {
-                    municipioSelect.append('<option value="' + municipio.id + '">' + municipio.nome + '</option>');
-                });
-                municipioSelect.trigger('change');
-            });
-
-            $.get('/api/resp_regioes/' + regionalId, function(data) {
-                var respSelect = $('#resp-regiao-select');
-                respSelect.empty().append('<option value="">Selecione um responsável...</option>');
-                $.each(data.responsaveis, function(index, resp) {
-                    respSelect.append('<option value="' + resp.id + '">' + resp.nome + '</option>');
-                });
-                respSelect.trigger('change');
-            });
-        } else {
-            $('#resp-regiao-select').empty().append('<option value="0">Selecione um responsável...</option>').trigger('change');
-        }
-    });
     
     // Loading state no submit
     $('#form-estudo').submit(function() {

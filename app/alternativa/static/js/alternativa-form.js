@@ -84,19 +84,31 @@ export function atualizarCircuitos(id_edp, subgrupo) {
         });
 }
 
+// Aceita a casa decimal com vírgula ("1.234,56") ou com ponto ("1234.56")
+function paraNumero(valor) {
+    if (valor === null || valor === undefined) return NaN;
+
+    let texto = String(valor).replace(/[R$\s]/g, "");
+    if (texto.includes(",")) {
+        texto = texto.replace(/\./g, "").replace(",", ".");
+    }
+
+    return parseFloat(texto);
+}
+
 function atualizarERD() {
     const sub = $("#subgrupo_select").val();
     const id_edp = $("#id_edp").val();
     const dataAbertura = $("#estudo_dados").data("data-abertura");
 
     const demAntes = Math.max(
-        parseFloat($("#dem_p_antes").val()),
-        parseFloat($("#dem_fp_antes").val())
+        paraNumero($("#dem_p_antes").val()),
+        paraNumero($("#dem_fp_antes").val())
     );
 
     const demDepois = Math.max(
-        parseFloat($("#dem_p_depois").val()),
-        parseFloat($("#dem_fp_depois").val())
+        paraNumero($("#dem_p_depois").val()),
+        paraNumero($("#dem_fp_depois").val())
     );
 
     const tipo = $("#flag_carga").is(":checked") ? 1 :

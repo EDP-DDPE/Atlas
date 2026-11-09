@@ -1,3 +1,6 @@
+import re
+from decimal import Decimal, InvalidOperation
+
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, TextAreaField, DecimalField, BooleanField,
@@ -6,6 +9,50 @@ from wtforms import (
 from wtforms.validators import DataRequired, Optional, NumberRange, InputRequired
 from wtforms.widgets import TextArea
 from app.models import Estudo, Circuito, FatorK
+
+
+class DecimalBRField(DecimalField):
+    """DecimalField que aceita o número no formato brasileiro.
+
+    Aceita "1.234,56", "1234,56", "R$ 1.234,56" e também "1234.56". Com
+    milhar=False (coordenadas) o ponto é sempre separador decimal, para que
+    -46.633 não vire -46633.
+    """
+
+    def __init__(self, *args, milhar=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.milhar = milhar
+
+    @staticmethod
+    def _normalizar(texto, milhar):
+        limpo = re.sub(r'[R$%\s]', '', texto)
+
+        if ',' in limpo:
+            # vírgula é o separador decimal; o ponto, se houver, é de milhar
+            limpo = limpo.replace('.', '').replace(',', '.')
+        elif milhar and re.fullmatch(r'[+-]?\d{1,3}(\.\d{3})+', limpo):
+            # só pontos, em grupos de três dígitos: separador de milhar
+            limpo = limpo.replace('.', '')
+
+        return limpo
+
+    def process_formdata(self, valuelist):
+        if not valuelist:
+            return
+
+        texto = self._normalizar(str(valuelist[0]), self.milhar)
+
+        if not texto:
+            self.data = None
+            return
+
+        try:
+            self.data = Decimal(texto)
+        except InvalidOperation:
+            self.data = None
+            raise ValueError(
+                'Informe um número válido. A casa decimal pode ser vírgula ou ponto (ex.: 1.234,56).'
+            )
 
 
 class AlternativaForm(FlaskForm):
@@ -32,7 +79,7 @@ class AlternativaForm(FlaskForm):
         }
     )
 
-    custo_modular = DecimalField(
+    custo_modular = DecimalBRField(
         'Custo Modular (R$)',
         validators=[
             #DataRequired('O custo modular é obrigatório'),
@@ -47,7 +94,7 @@ class AlternativaForm(FlaskForm):
     )
 
     # Demandas obrigatórias
-    dem_fp_ant = DecimalField(
+    dem_fp_ant = DecimalBRField(
         'Demanda FP Anterior (kW)',
         validators=[
             Optional(),
@@ -62,7 +109,7 @@ class AlternativaForm(FlaskForm):
         }
     )
 
-    dem_p_ant = DecimalField(
+    dem_p_ant = DecimalBRField(
         'Demanda P Anterior (kW)',
         validators=[
             Optional(),
@@ -76,7 +123,7 @@ class AlternativaForm(FlaskForm):
         }
     )
 
-    dem_fp_dep = DecimalField(
+    dem_fp_dep = DecimalBRField(
         'Demanda FP Depois (kW)',
         validators=[
             Optional(),
@@ -90,7 +137,7 @@ class AlternativaForm(FlaskForm):
         }
     )
 
-    dem_p_dep = DecimalField(
+    dem_p_dep = DecimalBRField(
         'Demanda P Depois (kW)',
         validators=[
             Optional(),
@@ -105,33 +152,35 @@ class AlternativaForm(FlaskForm):
     )
 
     # Campos opcionais
-    latitude_ponto_conexao = DecimalField(
+    latitude_ponto_conexao = DecimalBRField(
         'Latitude do Ponto de Conexão',
         validators=[
             Optional(),
             NumberRange(min=-90, max=90, message='Latitude deve estar entre -90 e 90')
         ],
         places=8,
+        milhar=False,
         render_kw={
             'placeholder': 'Ex: -23.5505199',
             'step': '0.00000001'
         }
     )
 
-    longitude_ponto_conexao = DecimalField(
+    longitude_ponto_conexao = DecimalBRField(
         'Longitude do Ponto de Conexão',
         validators=[
             Optional(),
             NumberRange(min=-180, max=180, message='Longitude deve estar entre -180 e 180')
         ],
         places=8,
+        milhar=False,
         render_kw={
             'placeholder': 'Ex: -46.6333094',
             'step': '0.00000001'
         }
     )
 
-    demanda_disponivel_ponto = DecimalField(
+    demanda_disponivel_ponto = DecimalBRField(
         'Demanda Disponível no Ponto (kW)',
         validators=[
             Optional(),
@@ -145,13 +194,14 @@ class AlternativaForm(FlaskForm):
         }
     )
 
-    ERD = StringField(
+    ERD = DecimalBRField(
         'ERD',
         validators=[
             Optional(),
         ],
+        places=3,
         render_kw={
-            'placeholder': '0.00',
+            'placeholder': '0,00',
         }
     )
 
@@ -196,7 +246,7 @@ class AlternativaForm(FlaskForm):
         }
     )
 
-    proporcionalidade = DecimalField(
+    proporcionalidade = DecimalBRField(
         'Proporcionalidade',
         places=2,
         render_kw={
@@ -325,7 +375,7 @@ class FiltroAlternativaForm(FlaskForm):
         ]
     )
 
-    custo_min = DecimalField(
+    custo_min = DecimalBRField(
         'Custo Mínimo (R$)',
         validators=[
             Optional(),
@@ -339,7 +389,7 @@ class FiltroAlternativaForm(FlaskForm):
         }
     )
 
-    custo_max = DecimalField(
+    custo_max = DecimalBRField(
         'Custo Máximo (R$)',
         validators=[
             Optional(),

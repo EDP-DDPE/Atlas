@@ -178,7 +178,11 @@ def cadastro_estudo():
             pedido=dados_ia.get("tipo_pedido"),
         ).first()
         if tipo_sol is not None:
-            form.tipo_pedido.data = tipo_sol.id_tipo_solicitacao
+            # sem isso, tipo_analise e tipo_pedido chegam à tela só com o
+            # "Selecione um tipo..." e a classificação sugerida não aparece
+            carregar_classificacao(form, tipo_sol.id_tipo_solicitacao)
+            # o valor das opções é o id e o campo é coerce=str
+            form.tipo_pedido.data = str(tipo_sol.id_tipo_solicitacao)
         form.tipo_geracao.data = dados_ia.get("tipo_geracao")
 
         #Aba Observações
@@ -530,8 +534,10 @@ def editar_estudo(id_estudo):
 
     # Aba Classificação
     form.tipo_viab.data = estudo.tipo_solicitacao.viabilidade
-    form.tipo_pedido.data = estudo.tipo_solicitacao.pedido
     form.tipo_analise.data = estudo.tipo_solicitacao.analise
+    # o valor das opções de tipo_pedido é o id, não o texto, e o campo é coerce=str:
+    # com o texto aqui nenhuma opção ficava marcada e o navegador mostrava a primeira
+    form.tipo_pedido.data = str(estudo.id_tipo_solicitacao)
     form.tipo_geracao.data = estudo.tipo_geracao
 
     # Aba Datas

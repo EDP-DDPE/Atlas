@@ -336,9 +336,9 @@
                                     <td>{{ alternativa.letra_alternativa }}</td>
                                     <td>{{ alternativa.descricao[:50] }}{% if alternativa.descricao|length > 50 %}...{% endif %}</td>
                                     <td>{{ alternativa.circuito.circuito if alternativa.circuito else 'N/A' }}</td>
-                                    <td>R$ {{ "{:,.2f}".format(alternativa.custo_modular) }}</td>
-                                    <td>R$ {{ "{:,.2f}".format(alternativa.ERD) }}</td>
-                                    <td>{{ "{:,.2f}".format(alternativa.proporcionalidade * 100) }}%</td>
+                                    <td>R$ {{ "{:,.2f}".format(alternativa.custo_modular or 0) }}</td>
+                                    <td>R$ {{ "{:,.2f}".format(alternativa.ERD or 0) }}</td>
+                                    <td>{{ "{:,.2f}".format((alternativa.proporcionalidade or 0) * 100) }}%</td>
                                     <td>
                                         {% if alternativa.flag_carga %}
                                             <span class="badge bg-success">Sim</span>

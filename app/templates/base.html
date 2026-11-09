@@ -381,6 +381,17 @@
                         <div class="navbar-nav">
                             <a class="nav-link" href="{{ url_for('analises_ovs_notas.listar') }}">
                                 <i class="fa-solid fa-clipboard-check"></i> Análise SAP
+                            <a class="nav-link" href="{{ expansion_url }}" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-cube"></i> Expansion 3D
+                                {% if novidades_pendente %}
+                                    <span class="badge rounded-pill bg-danger align-text-top">novo</span>
+                                {% endif %}
+                            </a>
+                        </div>
+
+                        <div class="navbar-nav">
+                            <a class="nav-link" href="{{ url_for('novidades.novidades') }}">
+                                <i class="fa-solid fa-bullhorn"></i> Novidades
                             </a>
                         </div>
 
@@ -638,13 +649,24 @@
                 return;
             }
 
+            // Abrir em outra aba/janela (target, Ctrl/Cmd/Shift) não troca a página
+            // atual: o overlay ficaria preso, pois só some no pageshow da próxima.
+            const alvo = target.getAttribute("target");
+            if (alvo && alvo !== "_self") return;
+            if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+
+            // Download também não navega
+            if (target.hasAttribute("download")) return;
+
             // 1) Link <a href="..."> que navega
             const href = target.getAttribute("href");
             const isLinkNav =
                 target.tagName === "A" &&
                 href &&
                 !href.startsWith("#") &&
-                !href.startsWith("javascript:");
+                !href.startsWith("javascript:") &&
+                !href.startsWith("mailto:") &&
+                !href.startsWith("tel:");
 
             // 2) Botão de submit em formulário GET
             const form = target.closest("form");
@@ -660,8 +682,12 @@
         });
 
         // Ao carregar a nova página, some com o overlay
-        window.addEventListener("pageshow", function () {
+        window.addEventListener("pageshow", function (e) {
             window.hidePageLoading();
+
+            // Volta pelo histórico: a página vem do cache do navegador e pode
+            // trazer o overlay de ação ligado de antes.
+            if (e.persisted) window.hideLoading();
         });
     </script>
 
@@ -705,6 +731,74 @@
         <link rel="stylesheet" href="{{ url_for('bot.static', filename='css/chat_widget.css') }}">
         {% include 'bot/_chat_widget.html' %}
         <script src="{{ url_for('bot.static', filename='js/chat_widget.js') }}"></script>
+    {% endif %}
+
+    <!-- Novidades: preferência "não exibir novamente", salva no servidor por usuário -->
+    {% if session.user %}
+    <script>
+        window.salvarPrefNovidades = function (naoExibir) {
+            return fetch("{{ url_for('novidades.preferencia') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nao_exibir: naoExibir })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { return !!(d && d.ok); })
+            .catch(function () { return false; });
+        };
+    </script>
+    {% endif %}
+
+    <!-- Novidades ainda não vistas: abre automaticamente na página inicial -->
+    {% if session.user and novidades_pendente and request.endpoint == 'main.home' %}
+        <div class="modal fade" id="novidadesModal" tabindex="-1" aria-labelledby="novidadesModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="novidadesModalLabel">
+                            <i class="fa-solid fa-bullhorn me-2 text-primary"></i>Novidades do Atlas
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% include 'novidades/_conteudo.html' %}
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="novNaoExibirModal">
+                            <label class="form-check-label" for="novNaoExibirModal">
+                                Não exibir novamente
+                            </label>
+                        </div>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const el = document.getElementById('novidadesModal');
+                const check = document.getElementById('novNaoExibirModal');
+
+                new bootstrap.Modal(el).show();
+
+                // Só grava ao fechar: se o usuário desmarcar de novo antes de sair,
+                // nada é salvo.
+                el.addEventListener('hidden.bs.modal', function () {
+                    if (!check.checked) return;
+
+                    salvarPrefNovidades(true).then(function (ok) {
+                        if (ok) {
+                            document.querySelectorAll('.nav-link .badge.bg-danger')
+                                    .forEach(function (b) { b.remove(); });
+                        } else {
+                            showToast('Não foi possível salvar a sua preferência.', 'error');
+                        }
+                    });
+                });
+            });
+        </script>
     {% endif %}
 
     {% block extra_js %}{% endblock %}

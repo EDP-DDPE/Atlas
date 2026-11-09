@@ -99,7 +99,9 @@ $(document).ready(function() {
         shadowUrl: "/marker-shadow.png"
     });
 
-    var map = L.map('map').setView([initialLat, initialLng], 13);
+    // doubleClickZoom desligado: o duplo clique passa a posicionar o pino
+    var map = L.map('map', {doubleClickZoom: false})
+               .setView([initialLat, initialLng], 13);
 
     map.options.zoomDelta = 1;
     map.options.wheelPxPerZoomLevel = 240;
@@ -125,8 +127,14 @@ $(document).ready(function() {
     // circuitos atualmente plotados (cada um é uma layer própria, filtrável no controle)
     var circuitoLayers = [];
 
-    // Já carrega os circuitos próximos da posição inicial do marcador
-    buscarCircuitosProximos(initialLat, initialLng);
+    // Posição inicial. Com latitude/longitude já preenchidas (banco ou IA) o
+    // valor pode vir em DMS ou UTM, então normaliza primeiro: é a normalização
+    // que reposiciona o marcador e busca os circuitos do ponto certo.
+    if ($('#latitude').val() && $('#longitude').val()) {
+        normalizarCoordenadas();
+    } else {
+        buscarCircuitosProximos(initialLat, initialLng);
+    }
 
     var redIcon = new L.Icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
@@ -155,30 +163,34 @@ $(document).ready(function() {
     }
 
     // Atualiza campos ao arrastar marcador
-    marker.on('dragend', function(e) {
+    marker.on('dragend', function() {
         var pos = marker.getLatLng();
         $('#latitude').val(pos.lat.toFixed(8));
         $('#longitude').val(pos.lng.toFixed(8));
-        buscarCircuitosProximos(e.latlng.lat, e.latlng.lng);
+        buscarCircuitosProximos(pos.lat, pos.lng);
     });
 
-    // Atualiza marcador e campos ao clicar no mapa
-    map.on('click', function(e) {
+    // Duplo clique para mover o marcador: com clique simples, qualquer clique
+    // no mapa descartava a coordenada que o usuário tinha digitado.
+    map.on('dblclick', function(e) {
         marker.setLatLng(e.latlng);
         $('#latitude').val(e.latlng.lat.toFixed(8));
         $('#longitude').val(e.latlng.lng.toFixed(8));
         buscarCircuitosProximos(e.latlng.lat, e.latlng.lng);
     });
 
-    // Função para atualizar marcador a partir dos inputs
+    // Leva o que está nos campos para o marcador, o enquadramento e os circuitos.
+    // Retorna false quando os campos ainda não têm um par utilizável.
     function updateMarkerFromInput() {
         var lat = parseFloat($('#latitude').val());
         var lng = parseFloat($('#longitude').val());
-        if (!isNaN(lat) && !isNaN(lng)) {
-            marker.setLatLng([lat, lng]);
-            map.setView([lat, lng], 13);
-            buscarCircuitosProximos(e.latlng.lat, e.latlng.lng);
-        }
+
+        if (isNaN(lat) || isNaN(lng)) return false;
+
+        marker.setLatLng([lat, lng]);
+        map.setView([lat, lng], 13);
+        buscarCircuitosProximos(lat, lng);
+        return true;
     }
 
     //$('#latitude, #longitude').on('change', updateMarkerFromInput);

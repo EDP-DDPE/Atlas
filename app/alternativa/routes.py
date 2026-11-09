@@ -8,7 +8,8 @@ from werkzeug.utils import secure_filename
 from app.models import Alternativa, Estudo, Circuito, db, FatorK, Anexo, StatusTipo
 from app.alternativa.forms import AlternativaForm
 from app.auth import requires_permission
-from sqlalchemy import literal_column, and_
+from datetime import timedelta
+from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 
 
@@ -38,6 +39,21 @@ def to_float_safe(value):
     return float(cleaned) if cleaned else 0.0
 
 
+def flash_erros_form(form):
+    """Mostra campo a campo o que impediu o salvamento, em vez de um aviso genérico."""
+    for campo, erros in form.errors.items():
+        label = getattr(getattr(form, campo, None), 'label', None)
+        nome = label.text if label else campo
+        for erro in erros:
+            flash(f"{nome}: {erro}", "warning")
+
+
+def resumo_erro(e):
+    """Primeira linha da exceção — evita despejar a query inteira na tela."""
+    linhas = str(getattr(e, 'orig', e)).strip().splitlines()
+    return linhas[0][:300] if linhas else type(e).__name__
+
+
 def calc_prop(form):
     dif_dem_fp = (form.dem_fp_dep.data or 0) - (form.dem_fp_ant.data or 0)
     dif_dem_p = (form.dem_p_dep.data or 0) - (form.dem_p_ant.data or 0)
@@ -55,7 +71,9 @@ def get_fator_k(subgrupo, data, edp):
             FatorK.id_edp == edp,
             FatorK.subgrupo_tarif == subgrupo,
             FatorK.data_ref <= data,
-            literal_column("DATEADD(day, 365, data_ref)") >= data
+            # equivale a DATEADD(day, 365, data_ref) >= data, sem depender
+            # do dialeto (T-SQL DATEADD nao existe no Databricks)
+            FatorK.data_ref >= data - timedelta(days=365)
         )
     ).order_by(FatorK.data_ref.desc()).first()
 
@@ -150,10 +168,11 @@ def listar(id_estudo):
 
             except Exception as e:
                 db.session.rollback()
-                flash("Erro ao cadastrar alternativa.", "danger")
+                current_app.logger.exception("Erro ao cadastrar alternativa")
+                flash(f"Erro ao cadastrar alternativa: {resumo_erro(e)}", "danger")
 
         else:
-            flash("Verifique os campos obrigatórios.", "warning")
+            flash_erros_form(form)
 
     return render_template(
         "alternativa/alternativa.html",
@@ -267,10 +286,11 @@ def editar_alternativa(id_alternativa):
 
         except Exception as e:
             db.session.rollback()
-            flash("Erro ao atualizar alternativa.", "danger")
+            current_app.logger.exception("Erro ao atualizar alternativa")
+            flash(f"Erro ao atualizar alternativa: {resumo_erro(e)}", "danger")
 
     else:
-        flash("Erros no formulário.", "danger")
+        flash_erros_form(form)
 
     return redirect(url_for("alternativa.listar", id_estudo=id_estudo))
 

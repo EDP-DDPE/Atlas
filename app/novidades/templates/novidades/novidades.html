@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}Novidades{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center my-3">
+    <div class="col-xl-10">
+
+        {% include 'novidades/_conteudo.html' %}
+
+        <div class="card mt-4">
+            <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+                {% if user %}
+                <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" id="novNaoExibirPagina"
+                           {% if not novidades_pendente %}checked{% endif %}>
+                    <label class="form-check-label" for="novNaoExibirPagina">
+                        Não exibir estas novidades automaticamente de novo
+                    </label>
+                </div>
+                {% else %}
+                <span></span>
+                {% endif %}
+                <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar ao início
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% if user %}
+<script>
+    document.getElementById('novNaoExibirPagina').addEventListener('change', function () {
+        const marcado = this.checked;
+
+        salvarPrefNovidades(marcado).then(function (ok) {
+            if (!ok) {
+                showToast('Não foi possível salvar a sua preferência.', 'error');
+                document.getElementById('novNaoExibirPagina').checked = !marcado;
+                return;
+            }
+
+            showToast(
+                marcado ? 'Pronto! As novidades não serão mais exibidas automaticamente.'
+                        : 'As novidades voltarão a ser exibidas automaticamente.',
+                'success'
+            );
+        });
+    });
+</script>
+{% endif %}
+
+{% endblock %}

@@ -5,8 +5,8 @@ import requests
 import re
 import os
 import subprocess
-from datetime import datetime
-from sqlalchemy import func, and_, literal_column
+from datetime import datetime, timedelta
+from sqlalchemy import and_
 import base64
 
 from app.utils.circuito_geojson import get_index, GEOJSON_PATH
@@ -16,22 +16,25 @@ from app.utils.activity_log import registrar_log
 api_bp = Blueprint("api", __name__)
 
 
-def convert_date(data_str: str) -> str:
-    if data_str == '':
-        return ''
-    dt = datetime.strptime(data_str, "%d/%m/%Y")
-    return dt.strftime("%Y-%m-%d")
+def convert_date(data_str: str):
+    """Converte 'dd/mm/aaaa' da ReceitaWS em date, ou None se vazio.
+
+    Devolve o objeto date em vez de string: o pyodbc convertia string para
+    DATE implicitamente, o driver do Databricks não.
+    """
+    if not data_str:
+        return None
+    return datetime.strptime(data_str, "%d/%m/%Y").date()
 
 
-def iso_para_sql_datetime(iso_str: str) -> str:
-    if iso_str == '':
-        return ''
+def iso_para_sql_datetime(iso_str: str):
+    """Converte ISO 8601 '2025-08-19T14:11:57.464Z' em datetime, ou None.
+
+    Mesmo motivo de convert_date: o valor precisa chegar tipado ao banco.
     """
-    Converte string ISO 8601 '2025-08-19T14:11:57.464Z' para
-    formato SQL Server 'YYYY-MM-DD HH:MM:SS'
-    """
-    dt = datetime.strptime(iso_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
+    if not iso_str:
+        return None
+    return datetime.strptime(iso_str, "%Y-%m-%dT%H:%M:%S.%fZ")
 
 
 def only_digits(s: str) -> str:
@@ -320,7 +323,9 @@ def get_fator_k(id_edp, subgrupo, data_ref, carga):
                 FatorK.id_edp == id_edp,
                 FatorK.subgrupo_tarif == subgrupo,
                 FatorK.data_ref <= data_ref_dt,
-                func.DATEADD(literal_column("day"), 365, FatorK.data_ref) >= data_ref_dt,
+                # equivale a DATEADD(day, 365, data_ref) >= data_ref_dt, sem
+                # depender do dialeto (T-SQL DATEADD nao existe no Databricks)
+                FatorK.data_ref >= data_ref_dt - timedelta(days=365),
             )
         )
         .order_by(FatorK.data_ref.desc())

@@ -322,11 +322,20 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="showLoading()">Cancelar</button>
-                    <button id="btnExcluirAlternativa" class="btn btn-danger" style="display:none;" onclick="showLoading()">Excluir</button>
-                    <button id="salvar_alternativa" type="submit" class="btn btn-primary" onclick="showLoading()">Salvar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button id="btnExcluirAlternativa" type="button" class="btn btn-danger" style="display:none;">Excluir</button>
+                    <button id="salvar_alternativa" type="submit" class="btn btn-primary">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    // O overlay só entra quando o formulário é realmente enviado. Ligado ao
+    // clique do botão, ele ficava preso ao cancelar, ao desistir da exclusão
+    // ou quando o navegador barrava um campo obrigatório.
+    document.getElementById("formAlternativa").addEventListener("submit", function () {
+        showLoading();
+    });
+</script>

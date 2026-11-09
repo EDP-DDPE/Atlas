@@ -32,21 +32,21 @@ class EstudoForm(FlaskForm):
 
     # Demandas solicitadas
     dem_carga_atual_fp = FloatField('Demanda Carga atual FP',
-                                    validators=[InputRequired(), NumberRange(min=0, max=200000)], default=0)
+                                    validators=[InputRequired(), NumberRange(min=0, max=1000000)], default=0)
     dem_carga_atual_p = FloatField('Demanda Carga atual P',
-                                   validators=[InputRequired(), NumberRange(min=0, max=200000)], default=0)
+                                   validators=[InputRequired(), NumberRange(min=0, max=1000000)], default=0)
     dem_carga_solicit_fp = FloatField('Demanda Carga Solicitada FP',
-                                      validators=[InputRequired(), NumberRange(min=0, max=200000)], default=0)
+                                      validators=[InputRequired(), NumberRange(min=0, max=1000000)], default=0)
     dem_carga_solicit_p = FloatField('Demanda Carga Solicitada P',
-                                     validators=[InputRequired(), NumberRange(min=0, max=200000)], default=0)
+                                     validators=[InputRequired(), NumberRange(min=0, max=1000000)], default=0)
     dem_ger_atual_fp = FloatField('Demanda Geração atual FP',
-                                  validators=[InputRequired(), NumberRange(min=0, max=200000)], default=0)
+                                  validators=[InputRequired(), NumberRange(min=0, max=1000000)], default=0)
     dem_ger_atual_p = FloatField('Demanda Geração atual P',
-                                 validators=[InputRequired(), NumberRange(min=0, max=200000)], default=0)
+                                 validators=[InputRequired(), NumberRange(min=0, max=1000000)], default=0)
     dem_ger_solicit_fp = FloatField('Demanda Geração Solicitada FP',
-                                    validators=[InputRequired(), NumberRange(min=0, max=200000)], default=0)
+                                    validators=[InputRequired(), NumberRange(min=0, max=1000000)], default=0)
     dem_ger_solicit_p = FloatField('Demanda Geração Solicitada P',
-                                   validators=[InputRequired(), NumberRange(min=0, max=200000)], default=0)
+                                   validators=[InputRequired(), NumberRange(min=0, max=1000000)], default=0)
 
     # Coordenadas do cliente
     latitude_cliente = FloatField('Latitude do Cliente',
