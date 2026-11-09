@@ -2,7 +2,7 @@
 set -e  # Para abortar se qualquer comando falhar
 
 # Ir para a pasta do projeto
-cd /var/www/atlas/GCIWeb || exit 1
+cd /var/www/atlas/Atlas || exit 1
 
 # Atualizar repositório
 /usr/bin/git fetch --all

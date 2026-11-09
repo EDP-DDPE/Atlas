@@ -1,5 +1,5 @@
 -- =====================================================================
--- GCIWeb / ATLAS - Schema SQL Server
+-- ATLAS - Schema SQL Server
 -- Sincronizado com app/models.py (SQLAlchemy) e sql_files/views.sql
 -- =====================================================================
 -- Schema otimizado para SQL SERVER com BIGINT IDENTITY
