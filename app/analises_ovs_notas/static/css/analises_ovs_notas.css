@@ -1,0 +1,222 @@
+.table-container {
+    position: relative;
+    overflow-x: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+.table-header-controls {
+    background: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.column-selector {
+    position: relative;
+}
+
+.column-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 2000;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+}
+
+.filter-row {
+    background: #f8f9fa;
+}
+
+.filter-row th {
+    padding: 8px !important;
+    border-top: 1px solid #dee2e6;
+}
+
+.filter-input {
+    width: 100%;
+    font-size: 0.875rem;
+    padding: 4px 6px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.sort-icon {
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.sort-icon:hover,
+.sort-icon.fa-sort-up,
+.sort-icon.fa-sort-down {
+    color: #0d6efd;
+}
+
+.resizable-header {
+    position: relative;
+    cursor: col-resize;
+}
+
+.resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    cursor: col-resize;
+    background: transparent;
+    border-right: 2px solid transparent;
+}
+
+.resize-handle:hover {
+    border-right: 2px solid #007bff;
+}
+
+.table-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.table-responsive-custom {
+    min-height: 400px;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.export-dropdown {
+    position: relative;
+}
+
+.export-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 2000;
+    min-width: 150px;
+    display: none;
+}
+
+.export-menu a {
+    display: block;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #495057;
+}
+
+.export-menu a:hover {
+    background: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .table-header-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .table-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+.btn-group .btn {
+    height: 40px; /* altura fixa desejada */
+    display: flex;
+    align-items: center; /* centraliza ícones/texto verticalmente */
+    justify-content: center; /* centraliza horizontalmente */
+    padding: 0 12px; /* ajuste do padding horizontal */
+}
+
+
+/* MODAL */
+  /* Estilos adicionais para melhorar a aparência */
+  #statusModal .card {
+    border: none;
+    border-radius: 8px;
+  }
+
+  #statusModal .card-header {
+    border-radius: 8px 8px 0 0;
+    padding: 12px 20px;
+  }
+
+  #statusModal .table thead th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  #statusModal .form-select:focus,
+  #statusModal .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+
+  #statusModal .table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  #statusModal .btn {
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  #statusModal .modal-content {
+    border-radius: 12px;
+    border: none;
+  }
+
+  #statusModal .modal-header {
+    border-radius: 12px 12px 0 0;
+  }
+
+  #pageSize {
+    height: calc(1.5em + 0.5rem + 2px); /* força a altura do select pequena */
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.select2-selection__clear {
+  display: none !important;
+}

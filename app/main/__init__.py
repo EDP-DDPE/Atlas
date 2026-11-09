@@ -122,6 +122,7 @@ def create_app():
     from app.empresas.routes import empresas_bp
     from app.bot.routes import bot_bp
     from app.admin.routes import admin_bp
+    from app.analises_ovs_notas.routes import analises_ovs_notas_bp
 
     app.register_blueprint(create_auth_blueprint(redirect_path="/callback"), url_prefix="/auth")
     # REDIRECT_URI deve ser http://localhost:5000/auth/callback
@@ -145,6 +146,7 @@ def create_app():
     app.register_blueprint(empresas_bp)
     app.register_blueprint(bot_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(analises_ovs_notas_bp)
 
 
     # with app.app_context():
