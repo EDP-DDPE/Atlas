@@ -473,7 +473,7 @@ class Alternativa(db.Model):
     id_estudo = db.Column(db.BigInteger, db.ForeignKey('atlas.estudos.id_estudo'), nullable=False)
     blob_image = db.Column(db.LargeBinary)
     observacao = db.Column(db.Text)
-    ERD = db.Column(db.Numeric(10, 3))
+    ERD = db.Column(db.Numeric(15, 2))
     demanda_disponivel_ponto = db.Column(db.Numeric(10, 2))
     flag_carga = db.Column(db.Boolean, nullable=True, default=False)
     flag_geracao = db.Column(db.Boolean, nullable=True, default=False)
@@ -543,6 +543,86 @@ class DocPadronizado(db.Model):
         'TipoSolicitacao',
         back_populates='doc_padronizados',
         lazy='joined'
+    )
+
+
+class OvsExtraidas(db.Model):
+    __tablename__ = 'OVS_EXTRAIDAS'
+    __table_args__ = {'schema': 'atlas'}
+
+    ID_OVS_EXTRAIDAS = db.Column(db.Integer, primary_key=True)
+    OV = db.Column(db.String(100))
+    DATA_SOLICITACAO = db.Column(db.Date)
+    DATA_PLANEJAMENTO = db.Column(db.Date)
+    DATELOAD =  db.Column(db.DateTime)
+    id_edp = db.Column(db.BigInteger)
+
+
+class StatusOvs(db.Model):
+    __tablename__ = 'STATUS_OVS'
+    __table_args__ = {'schema': 'atlas'}
+
+    ID_STATUS_OVS = db.Column(db.Integer, primary_key=True)
+    OV = db.Column(db.String(100))
+    STATUS_OV = db.Column(db.String(100))
+    DATA_SAP = db.Column(db.Date)
+    RESPONSAVEL_STATUS = db.Column(db.String(100))
+    DATELOAD = db.Column(db.DateTime)
+    id_edp = db.Column(db.BigInteger)
+
+
+class StatusNotas(db.Model):
+    __tablename__ = 'STATUS_NOTAS'
+    __table_args__ = {'schema': 'atlas'}
+
+    ID_STATUS_NOVAS = db.Column(db.Integer, primary_key=True)
+    NOTA = db.Column(db.String(100))
+    STATUS_NOTA = db.Column(db.String(100))
+    DATA_SAP = db.Column(db.Date)
+    RESPONSAVEL_STATUS = db.Column(db.String(100))
+    DATELOAD = db.Column(db.DateTime)
+    id_edp = db.Column(db.BigInteger)
+
+
+class NotasExtraidas(db.Model):
+    __tablename__ = 'NOTAS_EXTRAIDAS'
+    __table_args__ = {'schema': 'atlas'}
+
+    ID_NOTAS_EXTRAIDAS = db.Column(db.Integer, primary_key=True)
+    NOTA = db.Column(db.String(100))
+    DATA_SOLICITACAO = db.Column(db.Date)
+    DATA_VENCIMENTO = db.Column(db.Date)
+    DATELOAD = db.Column(db.DateTime)
+    id_edp = db.Column(db.BigInteger)
+
+class DocsNotas(db.Model):
+    __tablename__ = 'DOCS_NOTAS'
+    __table_args__ = {'schema': 'atlas'}
+
+    ID_DOC_NOTAS = db.Column(db.Integer, primary_key=True)
+    NOME_DOC = db.Column(db.String(255))
+    CAMINHO_DOC = db.Column(db.String(255))
+    TIPO_DOC = db.Column(db.String(255))
+    DATA_CRIACAO = db.Column(db.DateTime)
+    ID_NOTAS_EXTRAIDAS = db.Column(
+        db.Integer,
+        db.ForeignKey('atlas.NOTAS_EXTRAIDAS.ID_NOTAS_EXTRAIDAS'), 
+        nullable=False
+    )
+
+class DocsOvs(db.Model):
+    __tablename__ = 'DOCS_OVS'
+    __table_args__ = {'schema': 'atlas'}
+
+    ID_DOC_OVS = db.Column(db.Integer, primary_key=True)
+    NOME_DOC = db.Column(db.String(255))
+    CAMINHO_DOC = db.Column(db.String(255))
+    TIPO_DOC = db.Column(db.String(255))
+    DATA_CRIACAO = db.Column(db.DateTime)
+    ID_OVS_EXTRAIDAS = db.Column(
+        db.Integer,
+        db.ForeignKey('atlas.OVS_EXTRAIDAS.ID_OVS_EXTRAIDAS'),
+        nullable=False
     )
 
 

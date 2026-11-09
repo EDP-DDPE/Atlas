@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block titulo %}Análise SAP{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('analises_ovs_notas.static', filename='css/analises_ovs_notas.css') }}">
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Análise SAP</h4>
+        <button class="btn btn-success btn-sm" onclick="refreshAll()">
+            <i class="fas fa-sync-alt"></i> Atualizar
+        </button>
+    </div>
+
+    <!-- Abas -->
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-ovs" type="button">
+                <i class="bi bi-truck"></i> OVs
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-notas" type="button">
+                <i class="bi bi-journal-text"></i> Notas
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white">
+
+        <!-- ===== ABA OVs ===== -->
+        <div class="tab-pane fade show active" id="tab-ovs">
+            <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                <div class="input-group input-group-sm" style="max-width: 320px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" id="searchOvs" class="form-control" placeholder="Buscar OV...">
+                </div>
+                <select id="filterSituacaoOvs" class="form-select form-select-sm" style="max-width: 220px;">
+                    <option value="">Todas as situações</option>
+                    <option value="a_analisar">A analisar</option>
+                    <option value="analisado">Analisados</option>
+                    <option value="finalizado">Finalizados</option>
+                </select>
+                <button class="btn btn-outline-warning btn-sm" onclick="limparFiltros('ov')">
+                    <i class="fas fa-times"></i> Limpar Filtros
+                </button>
+            </div>
+            <div class="table-container">
+                <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+                    <div class="spinner-border text-primary"></div>
+                </div>
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr id="headerOvs"><!-- montado pelo JS --></tr>
+                        <tr id="filterRowOvs" class="filter-row"><!-- montado pelo JS --></tr>
+                    </thead>
+                    <tbody id="tableBodyOvs"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===== ABA NOTAS ===== -->
+        <div class="tab-pane fade" id="tab-notas">
+            <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                <div class="input-group input-group-sm" style="max-width: 320px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" id="searchNotas" class="form-control" placeholder="Buscar Nota...">
+                </div>
+            <select id="filterSituacaoNotas" class="form-select form-select-sm" style="max-width: 220px;">
+                <option value="">Todas as situações</option>
+                <option value="a_analisar">A analisar</option>
+                <option value="analisado">Analisados</option>
+                <option value="finalizado">Finalizados</option>
+            </select>
+            <button class="btn btn-outline-warning btn-sm" onclick="limparFiltros('nota')">
+                <i class="fas fa-times"></i> Limpar Filtros
+            </button>
+        </div>
+            <div class="table-container">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr id="headerNotas"><!-- montado pelo JS --></tr>
+                        <tr id="filterRowNotas" class="filter-row"><!-- montado pelo JS --></tr>
+                    </thead>
+                    <tbody id="tableBodyNotas"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal único de análise (serve p/ OV e Nota) -->
+<div class="modal fade" id="modalTriagem" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-clipboard-check me-2"></i><span id="triagemTitulo">Análise</span> — <span id="triagemLabel"></span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body position-relative">
+
+        <!-- overlay de carregamento do modal -->
+        <div id="analiseLoading" class="loading-overlay" style="display:none;">
+          <div class="spinner-border text-primary"></div>
+        </div>
+
+        <input type="hidden" id="triagemTipo">
+        <input type="hidden" id="triagemId">
+
+        <div class="row g-3">
+          <!-- INFORMAÇÕES -->
+          <div class="col-md-6" id="colInfo">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-secondary text-white">
+                <i class="fas fa-info-circle me-2"></i>Informações
+              </div>
+              <div class="card-body" id="analiseInfo">
+                <p class="text-muted mb-0">Carregando...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- DECISÃO -->
+          <div class="col-md-6" id="colDecisao">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-secondary text-white">
+                <i class="bi bi-clipboard-check me-2"></i>Decisão
+              </div>
+              <div class="card-body">
+                <label class="form-label">Situação</label>
+                <select id="triagemStatus" class="form-select">
+                  <option value="">Selecione...</option>
+                  <option value="Grandes Clientes">Grandes Clientes</option>
+                  <option value="Poder Publico">Poder Público</option>
+                  <option value="Projeto">Projeto</option>
+                  <option value="Loteamento">Loteamento</option>
+                  <option value="Analisar">Analisar</option>
+                </select>
+
+                <!-- ENCERRAMENTO MANUAL (só Notas; usado quando o robô falha) -->
+                <div id="blocoEncerramentoManual" class="border-top mt-3 pt-3" style="display:none;">
+                  <label class="form-label mb-1">Encerramento manual</label>
+                  <div class="form-text mt-0 mb-2">Use apenas se o robô não registrou o status do SAP.</div>
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                            onclick="iniciarEncerramento('ENCE')">
+                      <i class="bi bi-check2-all me-1"></i>Encerrar (ENCE)
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm"
+                            onclick="iniciarEncerramento('NREJ')">
+                      <i class="bi bi-x-circle me-1"></i>Rejeitar (NREJ)
+                    </button>
+                  </div>
+
+                  <!-- confirmação com a data do SAP -->
+                  <div id="confirmEncerramento" class="alert alert-warning mt-3 mb-0 py-2" style="display:none;">
+                    <div class="mb-2">
+                      <strong id="confirmEncerramentoTitulo"></strong>
+                    </div>
+                    <label for="encerramentoDataSap" class="form-label mb-1">Data no SAP</label>
+                    <input type="date" id="encerramentoDataSap" class="form-control form-control-sm mb-2">
+                    <div class="d-flex gap-2 justify-content-end">
+                      <button type="button" class="btn btn-light btn-sm" onclick="cancelarEncerramento()">Cancelar</button>
+                      <button type="button" class="btn btn-sm" id="btnConfirmarEncerramento"
+                              onclick="confirmarEncerramento()">Confirmar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTÓRICO DE STATUS -->
+        <div class="card shadow-sm mt-3">
+          <div class="card-header bg-secondary text-white">
+            <i class="bi bi-clock-history me-2"></i>Histórico de status
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Status</th>
+                    <th style="width: 120px;">Data</th>
+                    <th style="width: 70px;">EDP</th>
+                    <th>Responsável</th>
+                    <th style="width: 150px;">Registrado em</th>
+                  </tr>
+                </thead>
+                <tbody id="analiseHistorico"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESCRIÇÃO (arquivo .txt) -->
+        <div class="card shadow-sm mt-3">
+          <div class="card-header bg-secondary text-white">
+            <i class="fas fa-file-alt me-2"></i>Descrição
+          </div>
+          <div class="card-body">
+            <textarea id="analiseDescricao" class="form-control" rows="10" readonly
+                      style="font-family: var(--bs-font-monospace, monospace); font-size: .85rem;"></textarea>
+          </div>
+        </div>
+
+        <!-- ARQUIVOS DA PASTA -->
+        <div class="card shadow-sm mt-3">
+          <div class="card-header bg-secondary text-white">
+            <i class="fas fa-folder-open me-2"></i>Arquivos da pasta
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Arquivo</th>
+                    <th style="width: 90px;">Tipo</th>
+                    <th style="width: 150px;">Criado em</th>
+                    <th style="width: 130px;" class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="analiseDocs"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        <button class="btn btn-outline-success" id="btnCriarEstudo" onclick="criarEstudo()" style="display:none;">
+          <i class="bi bi-file-earmark-plus me-1"></i>Criar estudo
+        </button>
+        <button class="btn btn-primary" id="btnSalvarTriagem" onclick="salvarTriagem()">
+          <i class="bi bi-check-circle me-1"></i>Salvar decisão
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script type="module" src="{{ url_for('analises_ovs_notas.static', filename='js/analises_ovs_notas/main.js') }}"></script>
+
+{% endblock %}

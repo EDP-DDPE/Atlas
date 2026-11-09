@@ -122,6 +122,7 @@ def create_app():
     from app.empresas.routes import empresas_bp
     from app.bot.routes import bot_bp
     from app.admin.routes import admin_bp
+    from app.analises_ovs_notas.routes import analises_ovs_notas_bp
     from app.novidades.routes import novidades_bp
     from app.expansion.routes import expansion_bp
 
@@ -147,6 +148,7 @@ def create_app():
     app.register_blueprint(empresas_bp)
     app.register_blueprint(bot_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(analises_ovs_notas_bp)
     app.register_blueprint(novidades_bp)
     app.register_blueprint(expansion_bp)  # ticket de login único para o Expansion 3D
 
