@@ -413,6 +413,9 @@ def api_detalhes_nota(id):
     nota = NotasExtraidas.query.get_or_404(id)
     empresas = _empresas()
     docs = DocsNotas.query.filter_by(ID_NOTAS_EXTRAIDAS=nota.ID_NOTAS_EXTRAIDAS).order_by(DocsNotas.ID_DOC_NOTAS).all()
+    historico = (StatusNotas.query.filter_by(NOTA=nota.NOTA)
+                 .order_by(StatusNotas.ID_STATUS_NOVAS.desc()).all())
+    bloqueio = _bloqueio_criar_estudo("nota", nota.NOTA, historico)
 
     documentos = []
     descricao_texto = None
@@ -430,14 +433,12 @@ def api_detalhes_nota(id):
             "data_vencimento": nota.DATA_VENCIMENTO.strftime("%d/%m/%Y") if nota.DATA_VENCIMENTO else None,
             "edp": _edp_json(nota.id_edp, empresas),
         },
-        "historico": _serializa_historico(
-            StatusNotas.query.filter_by(NOTA=nota.NOTA)
-            .order_by(StatusNotas.ID_STATUS_NOVAS.desc()).all(),
-            "nota", empresas,
-        ),
+        "historico": _serializa_historico(historico, "nota", empresas),
         "descricao": descricao_texto,
         "documentos": documentos,
         "permissoes": _permissoes(),
+        "pode_criar_estudo": bloqueio is None,
+        "motivo_bloqueio_estudo": bloqueio,
     })
 
 
@@ -450,6 +451,9 @@ def api_detalhes_ov(id):
     ov = OvsExtraidas.query.get_or_404(id)
     empresas = _empresas()
     docs = DocsOvs.query.filter_by(ID_OVS_EXTRAIDAS=ov.ID_OVS_EXTRAIDAS).order_by(DocsOvs.ID_DOC_OVS).all()
+    historico = (StatusOvs.query.filter_by(OV=ov.OV)
+                 .order_by(StatusOvs.ID_STATUS_OVS.desc()).all())
+    bloqueio = _bloqueio_criar_estudo("ov", ov.OV, historico)
 
     documentos = []
     descricao_texto = None
@@ -480,14 +484,12 @@ def api_detalhes_ov(id):
             "data_planejamento": ov.DATA_PLANEJAMENTO.strftime("%d/%m/%Y") if ov.DATA_PLANEJAMENTO else None,
             "edp": _edp_json(ov.id_edp, empresas),
         },
-        "historico": _serializa_historico(
-            StatusOvs.query.filter_by(OV=ov.OV)
-            .order_by(StatusOvs.ID_STATUS_OVS.desc()).all(),
-            "ov", empresas,
-        ),
+        "historico": _serializa_historico(historico, "ov", empresas),
         "descricao": descricao_texto,
         "documentos": documentos,
         "permissoes": _permissoes(),
+        "pode_criar_estudo": bloqueio is None,
+        "motivo_bloqueio_estudo": bloqueio,
     })
 
 # ---------- DOWNLOAD ----------
@@ -560,12 +562,26 @@ def _iso(d):
     return d.strftime("%Y-%m-%d") if d else None
 
 
+def _bloqueio_criar_estudo(tipo, numero, historico):
+    """ Retorna o motivo pelo qual NÃO se pode criar estudo, ou None se pode.
+    Só pode criar quando o item não está encerrado/rejeitado (ENCE, NREJ,
+    ENCERRADA) e ainda não tem estudo vinculado no Atlas. """
+    vigente = status_vigente(historico, tipo)
+    if vigente is not None and _valor_status(vigente) in STATUS_FINALIZADO:
+        return "Item encerrado/rejeitado: não é possível criar estudo."
+    estudo = _estudo(_mapa_estudos([numero]), numero)
+    if estudo:
+        return f"Já existe estudo vinculado ({estudo.get('num_doc') or estudo['id']})."
+    return None
+
+
 @analises_ovs_notas_bp.route("/analises_ovs_notas/<tipo>/<int:id>/criar_estudo", methods=["POST"])
 @requires_permission("criar")
 def criar_estudo(tipo, id):
     if tipo == "ov":
         reg = OvsExtraidas.query.get_or_404(id)
         docs = DocsOvs.query.filter_by(ID_OVS_EXTRAIDAS=reg.ID_OVS_EXTRAIDAS).all()
+        historico = StatusOvs.query.filter_by(OV=reg.OV).all()
         numero, rotulo = reg.OV, "OV"
         data_venc = None
         data_entrada_ddpe = reg.DATA_PLANEJAMENTO   # -> "Data de Entrada DDPE"
@@ -573,12 +589,17 @@ def criar_estudo(tipo, id):
     elif tipo == "nota":
         reg = NotasExtraidas.query.get_or_404(id)
         docs = DocsNotas.query.filter_by(ID_NOTAS_EXTRAIDAS=reg.ID_NOTAS_EXTRAIDAS).all()
+        historico = StatusNotas.query.filter_by(NOTA=reg.NOTA).all()
         numero, rotulo = reg.NOTA, "Nota"
         data_venc = reg.DATA_VENCIMENTO
         data_entrada_ddpe = None
         obs_extra = ""
     else:
         abort(404)
+
+    bloqueio = _bloqueio_criar_estudo(tipo, numero, historico)
+    if bloqueio:
+        return jsonify({"status": "error", "message": bloqueio}), 400
 
     descricao = _descricao_do_registro(tipo, docs) or ""
 
