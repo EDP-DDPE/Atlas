@@ -12,8 +12,8 @@ analises_ovs_notas_bp = Blueprint("analises_ovs_notas", __name__, template_folde
 # ---------------------------------------------------------------------------
 # SITUAÇÕES (filtro "Situação") — avaliadas sobre o status ATUAL
 #   finalizado : ENCE, NREJ ou ENCERRADA
-#   a_analisar : ABERTA sem estudo vinculado, Grandes Clientes ou Poder Público
-#   analisado  : demais casos
+#   a_analisar : ABERTA, Grandes Clientes ou Poder Público SEM estudo vinculado
+#   analisado  : demais casos (inclusive qualquer item com estudo no Atlas)
 # (as chaves são comparadas em minúsculo e sem acento)
 # ---------------------------------------------------------------------------
 STATUS_FINALIZADO = {"ence", "nrej", "encerrada"}
@@ -148,9 +148,9 @@ def _situacao(chave_status, tem_estudo):
     """ Classifica o item a partir do status atual (já normalizado). """
     if chave_status in STATUS_FINALIZADO:
         return "finalizado"
-    if chave_status in STATUS_A_ANALISAR:
-        return "a_analisar"
-    if chave_status == STATUS_ABERTA and not tem_estudo:
+    if tem_estudo:
+        return "analisado"
+    if chave_status in STATUS_A_ANALISAR or chave_status == STATUS_ABERTA:
         return "a_analisar"
     return "analisado"
 
