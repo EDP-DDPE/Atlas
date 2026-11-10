@@ -12,8 +12,8 @@ analises_ovs_notas_bp = Blueprint("analises_ovs_notas", __name__, template_folde
 # ---------------------------------------------------------------------------
 # SITUAÇÕES (filtro "Situação") — avaliadas sobre o status ATUAL
 #   finalizado : ENCE, NREJ ou ENCERRADA
-#   a_analisar : ABERTA sem estudo vinculado, Grandes Clientes ou Poder Público
-#   analisado  : demais casos
+#   a_analisar : ABERTA, Grandes Clientes ou Poder Público SEM estudo vinculado
+#   analisado  : demais casos (inclusive qualquer item com estudo no Atlas)
 # (as chaves são comparadas em minúsculo e sem acento)
 # ---------------------------------------------------------------------------
 STATUS_FINALIZADO = {"ence", "nrej", "encerrada"}
@@ -30,7 +30,6 @@ STATUS_SOBREPOE = {
 STATUS_BADGE = {
     "grandes clientes": {"classe": "warning", "icone": "bi-hourglass-split"},
     "poder publico": {"classe": "warning", "icone": "bi-hourglass-split"},
-    "analisar": {"classe": "warning", "icone": "bi-hourglass-split"},
     "projeto": {"classe": "success", "icone": "bi-check-circle-fill"},
     "loteamento": {"classe": "success", "icone": "bi-check-circle-fill"},
     "em andamento": {"classe": "info", "icone": "bi-arrow-repeat"},
@@ -51,14 +50,20 @@ SUFIXO_DESCRICAO = "_descricao.txt"
 
 # --- TEMPORÁRIO --- #
 # TEMPORÁRIO: depois mover para o .env (ex.: DOCS_BASE)
-DOCS_BASE_TEMP = r"C:\Users\EX160187\EDP\O365_Planejamento da Expansao - Documentos\Servidores\Servidor SP\GCIWeb\docs_novas_ovs_notas"
+#   Nome da pasta, relativa à raiz do projeto (pasta acima de "app"):
+#   Atlas/docs_novas_ovs_notas/docs_notas e Atlas/docs_novas_ovs_notas/docs_ovs
+#   (o nome da pasta raiz não importa: o caminho é resolvido a partir de "app/main")
+DOCS_BASE_TEMP = "docs_novas_ovs_notas"
 
 SUBPASTAS = {"nota": "docs_notas", "ov": "docs_ovs"}
 
 def _upload_folder(tipo):
     """ Pasta base dos documentos. Os CAMINHO_DOC no banco são relativos a ela
-    (ex.: '45006425374/45006425374_descricao.txt'). """
-    return os.path.join(DOCS_BASE_TEMP, SUBPASTAS[tipo]).replace("\\", "/")
+    (ex.: '45006425374/45006425374_descricao.txt').
+    O Flask é criado em app/main/__init__.py, então
+    current_app.root_path = .../Atlas/app/main -> sobe 2 níveis = .../Atlas """
+    raiz_projeto = os.path.dirname(os.path.dirname(current_app.root_path))
+    return os.path.join(raiz_projeto, DOCS_BASE_TEMP, SUBPASTAS[tipo]).replace("\\", "/")
 # --- TEMPORÁRIO --- #
 
 
@@ -149,9 +154,9 @@ def _situacao(chave_status, tem_estudo):
     """ Classifica o item a partir do status atual (já normalizado). """
     if chave_status in STATUS_FINALIZADO:
         return "finalizado"
-    if chave_status in STATUS_A_ANALISAR:
-        return "a_analisar"
-    if chave_status == STATUS_ABERTA and not tem_estudo:
+    if tem_estudo:
+        return "analisado"
+    if chave_status in STATUS_A_ANALISAR or chave_status == STATUS_ABERTA:
         return "a_analisar"
     return "analisado"
 
@@ -414,6 +419,9 @@ def api_detalhes_nota(id):
     nota = NotasExtraidas.query.get_or_404(id)
     empresas = _empresas()
     docs = DocsNotas.query.filter_by(ID_NOTAS_EXTRAIDAS=nota.ID_NOTAS_EXTRAIDAS).order_by(DocsNotas.ID_DOC_NOTAS).all()
+    historico = (StatusNotas.query.filter_by(NOTA=nota.NOTA)
+                 .order_by(StatusNotas.ID_STATUS_NOVAS.desc()).all())
+    bloqueio = _bloqueio_criar_estudo("nota", nota.NOTA, historico)
 
     documentos = []
     descricao_texto = None
@@ -431,14 +439,12 @@ def api_detalhes_nota(id):
             "data_vencimento": nota.DATA_VENCIMENTO.strftime("%d/%m/%Y") if nota.DATA_VENCIMENTO else None,
             "edp": _edp_json(nota.id_edp, empresas),
         },
-        "historico": _serializa_historico(
-            StatusNotas.query.filter_by(NOTA=nota.NOTA)
-            .order_by(StatusNotas.ID_STATUS_NOVAS.desc()).all(),
-            "nota", empresas,
-        ),
+        "historico": _serializa_historico(historico, "nota", empresas),
         "descricao": descricao_texto,
         "documentos": documentos,
         "permissoes": _permissoes(),
+        "pode_criar_estudo": bloqueio is None,
+        "motivo_bloqueio_estudo": bloqueio,
     })
 
 
@@ -451,6 +457,9 @@ def api_detalhes_ov(id):
     ov = OvsExtraidas.query.get_or_404(id)
     empresas = _empresas()
     docs = DocsOvs.query.filter_by(ID_OVS_EXTRAIDAS=ov.ID_OVS_EXTRAIDAS).order_by(DocsOvs.ID_DOC_OVS).all()
+    historico = (StatusOvs.query.filter_by(OV=ov.OV)
+                 .order_by(StatusOvs.ID_STATUS_OVS.desc()).all())
+    bloqueio = _bloqueio_criar_estudo("ov", ov.OV, historico)
 
     documentos = []
     descricao_texto = None
@@ -481,14 +490,12 @@ def api_detalhes_ov(id):
             "data_planejamento": ov.DATA_PLANEJAMENTO.strftime("%d/%m/%Y") if ov.DATA_PLANEJAMENTO else None,
             "edp": _edp_json(ov.id_edp, empresas),
         },
-        "historico": _serializa_historico(
-            StatusOvs.query.filter_by(OV=ov.OV)
-            .order_by(StatusOvs.ID_STATUS_OVS.desc()).all(),
-            "ov", empresas,
-        ),
+        "historico": _serializa_historico(historico, "ov", empresas),
         "descricao": descricao_texto,
         "documentos": documentos,
         "permissoes": _permissoes(),
+        "pode_criar_estudo": bloqueio is None,
+        "motivo_bloqueio_estudo": bloqueio,
     })
 
 # ---------- DOWNLOAD ----------
@@ -497,6 +504,13 @@ def _download_doc(tipo, doc):
     """ Envia o arquivo físico correspondente a um registro de documento. """
     caminho_abs = _caminho_seguro(getattr(doc,"CAMINHO_DOC", None), tipo)
     if not caminho_abs or not os.path.isfile(caminho_abs):
+        # --- DEBUG ---
+        print(f"=== DEBUG DOWNLOAD 404 ({tipo}) ===")
+        print("nome            :", repr(getattr(doc, "NOME_DOC", None)))
+        print("CAMINHO_DOC     :", repr(getattr(doc, "CAMINHO_DOC", None)))
+        print("caminho final   :", repr(caminho_abs))
+        print("base existe?    :", os.path.isdir(_upload_folder(tipo)))
+        # --- FIM DEBUG ---
         abort(404)
     directory = os.path.dirname(caminho_abs)
     arquivo = os.path.basename(caminho_abs)
@@ -561,12 +575,24 @@ def _iso(d):
     return d.strftime("%Y-%m-%d") if d else None
 
 
+def _bloqueio_criar_estudo(tipo, numero, historico):
+    """ Retorna o motivo pelo qual NÃO se pode criar estudo, ou None se pode.
+    Só pode criar quando o item está na situação "A analisar" (mesma regra
+    do filtro Situação da listagem — ver _situacao). """
+    estudo = _estudo(_mapa_estudos([numero]), numero)
+    situacao = montar_status(historico, tipo, tem_estudo=estudo is not None)["situacao"]
+    if situacao != "a_analisar":
+        return "Só é possível criar estudo para itens em \"A analisar\"."
+    return None
+
+
 @analises_ovs_notas_bp.route("/analises_ovs_notas/<tipo>/<int:id>/criar_estudo", methods=["POST"])
 @requires_permission("criar")
 def criar_estudo(tipo, id):
     if tipo == "ov":
         reg = OvsExtraidas.query.get_or_404(id)
         docs = DocsOvs.query.filter_by(ID_OVS_EXTRAIDAS=reg.ID_OVS_EXTRAIDAS).all()
+        historico = StatusOvs.query.filter_by(OV=reg.OV).all()
         numero, rotulo = reg.OV, "OV"
         data_venc = None
         data_entrada_ddpe = reg.DATA_PLANEJAMENTO   # -> "Data de Entrada DDPE"
@@ -574,12 +600,17 @@ def criar_estudo(tipo, id):
     elif tipo == "nota":
         reg = NotasExtraidas.query.get_or_404(id)
         docs = DocsNotas.query.filter_by(ID_NOTAS_EXTRAIDAS=reg.ID_NOTAS_EXTRAIDAS).all()
+        historico = StatusNotas.query.filter_by(NOTA=reg.NOTA).all()
         numero, rotulo = reg.NOTA, "Nota"
         data_venc = reg.DATA_VENCIMENTO
         data_entrada_ddpe = None
         obs_extra = ""
     else:
         abort(404)
+
+    bloqueio = _bloqueio_criar_estudo(tipo, numero, historico)
+    if bloqueio:
+        return jsonify({"status": "error", "message": bloqueio}), 400
 
     descricao = _descricao_do_registro(tipo, docs) or ""
 

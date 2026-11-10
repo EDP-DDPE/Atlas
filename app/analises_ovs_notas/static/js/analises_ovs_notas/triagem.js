@@ -68,7 +68,10 @@ function carregarDetalhes(tipo, id) {
     $.get(API[tipo].detalhes(id))
         .done(resp => {
             podeDeletar = !somenteLeitura && !!(resp.permissoes && resp.permissoes.deletar);
-            $("#btnCriarEstudo").toggle(!somenteLeitura && !!(resp.permissoes && resp.permissoes.criar));
+            $("#btnCriarEstudo")
+                .toggle(!somenteLeitura && !!resp.pode_criar_estudo
+                        && !!(resp.permissoes && resp.permissoes.criar))
+                .prop("disabled", false);
             renderInfo(tipo, resp.info);
             renderHistorico(resp.historico);
             renderDescricao(resp.descricao);
