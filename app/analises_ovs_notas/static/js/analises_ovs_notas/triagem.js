@@ -67,7 +67,8 @@ function carregarDetalhes(tipo, id) {
     $("#analiseLoading").show();
     $.get(API[tipo].detalhes(id))
         .done(resp => {
-            podeDeletar = !somenteLeitura && !!(resp.permissoes && resp.permissoes.deletar);
+            // exclusão de arquivos disponível em Analisar e Visualizar (respeita a permissão "deletar")
+            podeDeletar = !!(resp.permissoes && resp.permissoes.deletar);
             $("#btnCriarEstudo")
                 .toggle(!somenteLeitura && !!resp.pode_criar_estudo
                         && !!(resp.permissoes && resp.permissoes.criar))
