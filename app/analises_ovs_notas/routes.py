@@ -30,7 +30,6 @@ STATUS_SOBREPOE = {
 STATUS_BADGE = {
     "grandes clientes": {"classe": "warning", "icone": "bi-hourglass-split"},
     "poder publico": {"classe": "warning", "icone": "bi-hourglass-split"},
-    "analisar": {"classe": "warning", "icone": "bi-hourglass-split"},
     "projeto": {"classe": "success", "icone": "bi-check-circle-fill"},
     "loteamento": {"classe": "success", "icone": "bi-check-circle-fill"},
     "em andamento": {"classe": "info", "icone": "bi-arrow-repeat"},
