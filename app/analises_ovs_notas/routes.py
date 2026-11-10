@@ -564,14 +564,12 @@ def _iso(d):
 
 def _bloqueio_criar_estudo(tipo, numero, historico):
     """ Retorna o motivo pelo qual NÃO se pode criar estudo, ou None se pode.
-    Só pode criar quando o item não está encerrado/rejeitado (ENCE, NREJ,
-    ENCERRADA) e ainda não tem estudo vinculado no Atlas. """
-    vigente = status_vigente(historico, tipo)
-    if vigente is not None and _valor_status(vigente) in STATUS_FINALIZADO:
-        return "Item encerrado/rejeitado: não é possível criar estudo."
+    Só pode criar quando o item está na situação "A analisar" (mesma regra
+    do filtro Situação da listagem — ver _situacao). """
     estudo = _estudo(_mapa_estudos([numero]), numero)
-    if estudo:
-        return f"Já existe estudo vinculado ({estudo.get('num_doc') or estudo['id']})."
+    situacao = montar_status(historico, tipo, tem_estudo=estudo is not None)["situacao"]
+    if situacao != "a_analisar":
+        return "Só é possível criar estudo para itens em \"A analisar\"."
     return None
 
 
