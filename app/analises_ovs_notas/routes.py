@@ -50,14 +50,20 @@ SUFIXO_DESCRICAO = "_descricao.txt"
 
 # --- TEMPORÁRIO --- #
 # TEMPORÁRIO: depois mover para o .env (ex.: DOCS_BASE)
-DOCS_BASE_TEMP = r"C:\Users\EX160187\EDP\O365_Planejamento da Expansao - Documentos\Servidores\Servidor SP\GCIWeb\docs_novas_ovs_notas"
+#   Nome da pasta, relativa à raiz do projeto (pasta acima de "app"):
+#   Atlas/docs_novas_ovs_notas/docs_notas e Atlas/docs_novas_ovs_notas/docs_ovs
+#   (o nome da pasta raiz não importa: o caminho é resolvido a partir de "app/main")
+DOCS_BASE_TEMP = "docs_novas_ovs_notas"
 
 SUBPASTAS = {"nota": "docs_notas", "ov": "docs_ovs"}
 
 def _upload_folder(tipo):
     """ Pasta base dos documentos. Os CAMINHO_DOC no banco são relativos a ela
-    (ex.: '45006425374/45006425374_descricao.txt'). """
-    return os.path.join(DOCS_BASE_TEMP, SUBPASTAS[tipo]).replace("\\", "/")
+    (ex.: '45006425374/45006425374_descricao.txt').
+    O Flask é criado em app/main/__init__.py, então
+    current_app.root_path = .../Atlas/app/main -> sobe 2 níveis = .../Atlas """
+    raiz_projeto = os.path.dirname(os.path.dirname(current_app.root_path))
+    return os.path.join(raiz_projeto, DOCS_BASE_TEMP, SUBPASTAS[tipo]).replace("\\", "/")
 # --- TEMPORÁRIO --- #
 
 
@@ -498,6 +504,13 @@ def _download_doc(tipo, doc):
     """ Envia o arquivo físico correspondente a um registro de documento. """
     caminho_abs = _caminho_seguro(getattr(doc,"CAMINHO_DOC", None), tipo)
     if not caminho_abs or not os.path.isfile(caminho_abs):
+        # --- DEBUG ---
+        print(f"=== DEBUG DOWNLOAD 404 ({tipo}) ===")
+        print("nome            :", repr(getattr(doc, "NOME_DOC", None)))
+        print("CAMINHO_DOC     :", repr(getattr(doc, "CAMINHO_DOC", None)))
+        print("caminho final   :", repr(caminho_abs))
+        print("base existe?    :", os.path.isdir(_upload_folder(tipo)))
+        # --- FIM DEBUG ---
         abort(404)
     directory = os.path.dirname(caminho_abs)
     arquivo = os.path.basename(caminho_abs)
