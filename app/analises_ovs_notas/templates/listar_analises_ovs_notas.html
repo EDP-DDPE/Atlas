@@ -44,6 +44,17 @@
                 <button class="btn btn-outline-warning btn-sm" onclick="limparFiltros('ov')">
                     <i class="fas fa-times"></i> Limpar Filtros
                 </button>
+                <!-- Registros por página -->
+                <div class="d-flex align-items-center ms-auto">
+                    <label class="form-label mb-0 me-2" for="pageSizeOvs">Exibir:</label>
+                    <select id="pageSizeOvs" class="form-select form-select-sm me-1" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span>registros</span>
+                </div>
             </div>
             <div class="table-container">
                 <div id="loadingOverlay" class="loading-overlay" style="display:none;">
@@ -56,6 +67,18 @@
                     </thead>
                     <tbody id="tableBodyOvs"></tbody>
                 </table>
+            </div>
+            <!-- Rodapé com paginação -->
+            <div class="table-actions mt-2">
+                <div class="pagination-info">
+                    Exibindo <span id="startOvs">0</span>
+                    a <span id="endOvs">0</span>
+                    de <span id="totalOvs">0</span> OVs
+                    | <span id="pageOvs">Página 1</span>
+                </div>
+                <nav aria-label="Paginação das OVs">
+                    <ul class="pagination pagination-sm mb-0" id="paginationOvs"></ul>
+                </nav>
             </div>
         </div>
 
@@ -75,6 +98,17 @@
             <button class="btn btn-outline-warning btn-sm" onclick="limparFiltros('nota')">
                 <i class="fas fa-times"></i> Limpar Filtros
             </button>
+            <!-- Registros por página -->
+            <div class="d-flex align-items-center ms-auto">
+                <label class="form-label mb-0 me-2" for="pageSizeNotas">Exibir:</label>
+                <select id="pageSizeNotas" class="form-select form-select-sm me-1" style="width: auto;">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span>registros</span>
+            </div>
         </div>
             <div class="table-container">
                 <table class="table table-hover table-sm mb-0">
@@ -84,6 +118,18 @@
                     </thead>
                     <tbody id="tableBodyNotas"></tbody>
                 </table>
+            </div>
+            <!-- Rodapé com paginação -->
+            <div class="table-actions mt-2">
+                <div class="pagination-info">
+                    Exibindo <span id="startNotas">0</span>
+                    a <span id="endNotas">0</span>
+                    de <span id="totalNotas">0</span> Notas
+                    | <span id="pageNotas">Página 1</span>
+                </div>
+                <nav aria-label="Paginação das Notas">
+                    <ul class="pagination pagination-sm mb-0" id="paginationNotas"></ul>
+                </nav>
             </div>
         </div>
     </div>

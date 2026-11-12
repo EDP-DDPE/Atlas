@@ -5,8 +5,8 @@ import { initializeTooltips } from "./utils.js";
 import "./triagem.js";
 
 export const state = {
-    ovs:   { data: [], filtered: [], colFilters: {}, sort: { key: null, dir: "asc" } },
-    notas: { data: [], filtered: [], colFilters: {}, sort: { key: null, dir: "asc" } },
+    ovs:   { data: [], filtered: [], colFilters: {}, sort: { key: null, dir: "asc" }, page: 1, perPage: 25 },
+    notas: { data: [], filtered: [], colFilters: {}, sort: { key: null, dir: "asc" }, page: 1, perPage: 25 },
     permissoes: {}
 };
 
