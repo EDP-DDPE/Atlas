@@ -1,7 +1,7 @@
 // filters.js — busca global, filtro por situação, filtro por coluna e ordenação (por aba)
 import { state } from "./main.js";
 import { debounce } from "./utils.js";
-import { renderOvs, renderNotas } from "./table.js";
+import { renderOvs, renderNotas, setupPageSize } from "./table.js";
 import { COLUNAS, HEADER_IDS, valorOrdenacao, valorFiltro } from "./columns.js";
 
 const CONTROLES = {
@@ -14,9 +14,12 @@ const colunaPorKey = (tipo, key) => COLUNAS[tipo].find(c => c.key === key);
 // ---------------------------------------------------------------------------
 // Aplica filtros + ordenação e redesenha a tabela
 // ---------------------------------------------------------------------------
-export function aplicarFiltros(tipo) {
+// manterPagina = true quando só recarregou os dados (ex.: botão Atualizar /
+// depois de salvar); ao mudar filtro/ordenação volta para a página 1.
+export function aplicarFiltros(tipo, manterPagina = false) {
     const ctl = CONTROLES[tipo];
     const st = ctl.estado();
+    if (!manterPagina) st.page = 1;
     const termo = ($(ctl.busca).val() || "").trim().toLowerCase();
     const sit = $(ctl.situacao).val();
     const colsBusca = COLUNAS[tipo].filter(c => c.filtro !== false);
@@ -82,6 +85,7 @@ window.limparFiltros = limparFiltros;
 // Liga os eventos (chamado depois de montar os cabeçalhos)
 // ---------------------------------------------------------------------------
 export function setupFilters() {
+    setupPageSize();
     Object.keys(CONTROLES).forEach(tipo => {
         const ctl = CONTROLES[tipo];
         const ids = HEADER_IDS[tipo];
