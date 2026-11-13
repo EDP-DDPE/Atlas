@@ -640,6 +640,28 @@
                                         Formatos aceitos: PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG
                                     </small>
                                 </div>
+
+                                {% if anexos_origem is defined and anexos_origem %}
+                                <!-- Anexos vindos da Nota (Análise SAP > Criar estudo) -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-paperclip me-1"></i>Anexos da Nota
+                                    </label>
+                                    <div class="border rounded p-2">
+                                        {% for a in anexos_origem %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="anexos_origem"
+                                                   value="{{ a.id }}" id="anexoOrigem{{ a.id }}"
+                                                   {% if a.marcado %}checked{% endif %}>
+                                            <label class="form-check-label" for="anexoOrigem{{ a.id }}">{{ a.nome }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">
+                                        Os arquivos marcados serão anexados ao estudo ao salvar.
+                                    </small>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
 

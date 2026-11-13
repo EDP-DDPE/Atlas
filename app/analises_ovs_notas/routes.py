@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, current_app, abort, send_from_directory, session, url_for
 from app.models import db, OvsExtraidas, StatusOvs, NotasExtraidas, StatusNotas, DocsNotas, DocsOvs, Estudo, EDP
 from app.auth import requires_permission, get_usuario_logado
+from app.cadastro.forms import ALLOWED_EXTENSIONS
 from datetime import datetime
 from collections import defaultdict
 import os
@@ -52,18 +53,21 @@ SUFIXO_DESCRICAO = "_descricao.txt"
 # TEMPORÁRIO: depois mover para o .env (ex.: DOCS_BASE)
 #   Nome da pasta, relativa à raiz do projeto (pasta acima de "app"):
 #   Atlas/docs_novas_ovs_notas/docs_notas e Atlas/docs_novas_ovs_notas/docs_ovs
-#   (o nome da pasta raiz não importa: o caminho é resolvido a partir de "app/main")
+#   (o nome da pasta raiz não importa: o caminho é resolvido a partir da pasta "app")
 DOCS_BASE_TEMP = "docs_novas_ovs_notas"
 
 SUBPASTAS = {"nota": "docs_notas", "ov": "docs_ovs"}
 
+# Pasta "app" = pasta acima deste arquivo (app/analises_ovs_notas/routes.py -> app)
+APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def _upload_folder(tipo):
     """ Pasta base dos documentos. Os CAMINHO_DOC no banco são relativos a ela
     (ex.: '45006425374/45006425374_descricao.txt').
-    O Flask é criado em app/main/__init__.py, então
-    current_app.root_path = .../Atlas/app/main -> sobe 2 níveis = .../Atlas """
-    raiz_projeto = os.path.dirname(os.path.dirname(current_app.root_path))
-    return os.path.join(raiz_projeto, DOCS_BASE_TEMP, SUBPASTAS[tipo]).replace("\\", "/")
+    Parte da pasta "app", volta uma pasta (..) e entra em docs_novas_ovs_notas:
+    .../app/../docs_novas_ovs_notas/docs_notas (ou docs_ovs) """
+    pasta = os.path.join(APP_DIR, "..", DOCS_BASE_TEMP, SUBPASTAS[tipo])
+    return os.path.normpath(pasta).replace("\\", "/")
 # --- TEMPORÁRIO --- #
 
 
@@ -575,6 +579,53 @@ def _iso(d):
     return d.strftime("%Y-%m-%d") if d else None
 
 
+# ---------------------------------------------------------------------------
+# ANEXOS DA NOTA -> ESTUDO
+#   Ao "Criar estudo" a partir de uma Nota, os arquivos da pasta dela que têm
+#   extensão aceita no cadastro (ALLOWED_EXTENSIONS do EstudoForm) são levados
+#   para a tela de cadastro e copiados para o estudo quando ele é salvo.
+#   Na sessão guardamos só os IDs (a session é um cookie de ~4 KB).
+# ---------------------------------------------------------------------------
+SESSAO_ANEXOS_ORIGEM = "ia_prefill_anexos_origem"
+
+
+def _extensao(nome):
+    nome = str(nome or "").strip()
+    return nome.rsplit(".", 1)[1].lower() if "." in nome else ""
+
+
+def _extensao_aceita(*nomes):
+    """ Aceita se QUALQUER um dos nomes (NOME_DOC, nome do arquivo no disco)
+    tiver extensão permitida. """
+    return any(_extensao(n) in ALLOWED_EXTENSIONS for n in nomes if n)
+
+
+def documentos_nota_para_estudo(id_nota, ids_doc=None):
+    """ Lista [(doc, caminho_abs)] dos arquivos da Nota que podem ir para o
+    estudo: pertencem à Nota, têm extensão aceita e existem no disco.
+    ids_doc (opcional) restringe aos documentos escolhidos na tela. """
+    query = DocsNotas.query.filter_by(ID_NOTAS_EXTRAIDAS=id_nota)
+    if ids_doc is not None:
+        ids_doc = [int(i) for i in ids_doc if str(i).isdigit()]
+        if not ids_doc:
+            return []
+        query = query.filter(DocsNotas.ID_DOC_NOTAS.in_(ids_doc))
+
+    resultado = []
+    docs = query.order_by(DocsNotas.ID_DOC_NOTAS).all()
+    print(f"=== DEBUG ANEXOS NOTA (ID_NOTAS_EXTRAIDAS={id_nota}, ids_doc={ids_doc}) -> {len(docs)} doc(s) no banco ===")
+    for d in docs:
+        caminho_abs = _caminho_seguro(d.CAMINHO_DOC, "nota")
+        existe = bool(caminho_abs and os.path.isfile(caminho_abs))
+        aceita = _extensao_aceita(d.NOME_DOC, os.path.basename(caminho_abs or ""))
+        print(f"  id={d.ID_DOC_NOTAS} nome={d.NOME_DOC!r} caminho_doc={d.CAMINHO_DOC!r} "
+              f"-> final={caminho_abs!r} existe={existe} ext_aceita={aceita}")
+        if existe and aceita:
+            resultado.append((d, caminho_abs))
+    print(f"  => {len(resultado)} anexo(s) vão para o estudo")
+    return resultado
+
+
 def _bloqueio_criar_estudo(tipo, numero, historico):
     """ Retorna o motivo pelo qual NÃO se pode criar estudo, ou None se pode.
     Só pode criar quando o item está na situação "A analisar" (mesma regra
@@ -631,6 +682,16 @@ def criar_estudo(tipo, id):
         "data_vencimento_ddpe": _iso(data_entrada_ddpe),         # DATA_PLANEJAMENTO -> Data de Entrada DDPE
     }
     session["ia_prefill_nome_pdf"] = f"{rotulo} {numero}"
+
+    # Anexos da Nota (só os tipos aceitos no cadastro) vão junto para o estudo
+    if tipo == "nota":
+        session[SESSAO_ANEXOS_ORIGEM] = {
+            "tipo": "nota",
+            "id": reg.ID_NOTAS_EXTRAIDAS,
+            "docs": [d.ID_DOC_NOTAS for d, _ in documentos_nota_para_estudo(reg.ID_NOTAS_EXTRAIDAS)],
+        }
+    else:
+        session.pop(SESSAO_ANEXOS_ORIGEM, None)
 
     return jsonify({
         "status": "success",

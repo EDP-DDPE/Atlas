@@ -11,6 +11,8 @@ from app.bot.atlas_agent import AtlasAgent
 from app.utils.activity_log import registrar_log
 from sqlalchemy import desc
 import os
+import shutil
+import mimetypes
 
 import tempfile
 import requests
@@ -124,6 +126,31 @@ def cadastro_estudo():
     carregar_choices_estudo(form)
     usuario = get_usuario_logado()
     # print(f'usuario: {usuario.nome}, id: {usuario.id_usuario}')
+
+    # ============================================
+    # ANEXOS VINDOS DA NOTA ("Criar estudo" na Análise SAP)
+    #   docs_origem = [(DocsNotas, caminho_abs)] já filtrados pelos tipos aceitos
+    # ============================================
+    from app.analises_ovs_notas.routes import SESSAO_ANEXOS_ORIGEM, documentos_nota_para_estudo
+
+    docs_origem = []
+    origem = session.get(SESSAO_ANEXOS_ORIGEM) if request.args.get("ia_prefill") == "1" else None
+    if origem and origem.get("tipo") == "nota":
+        docs_origem = documentos_nota_para_estudo(origem.get("id"), origem.get("docs", []))
+
+    if request.method == "POST":
+        marcados = set(request.form.getlist("anexos_origem"))
+    else:
+        marcados = {str(d.ID_DOC_NOTAS) for d, _ in docs_origem}   # todos marcados ao abrir
+
+    anexos_origem = [
+        {"id": d.ID_DOC_NOTAS, "nome": d.NOME_DOC, "marcado": str(d.ID_DOC_NOTAS) in marcados}
+        for d, _ in docs_origem
+    ]
+    # --- DEBUG ---
+    print(f"=== DEBUG CADASTRO ({request.method}) ia_prefill={request.args.get('ia_prefill')!r} "
+          f"origem={origem!r} docs_origem={len(docs_origem)} marcados={sorted(marcados)}")
+    # --- FIM DEBUG ---
 
     # ============================================
     # PREFILL VIA IA (somente no GET)
@@ -280,7 +307,35 @@ def cadastro_estudo():
                     db.session.add(novo_anexo)
                     anexos_salvos.append(nome_arquivo)
 
+            # Copiar os anexos da Nota que ficaram marcados
+            for doc, caminho_origem in docs_origem:
+                if str(doc.ID_DOC_NOTAS) not in marcados:
+                    continue
+                prefix = f"DDPE_{str(num_doc).replace('/', '_')}"
+                # usa o NOME_DOC se ele tiver extensão; senão, o nome real do arquivo
+                nome_original = doc.NOME_DOC if doc.NOME_DOC and "." in doc.NOME_DOC \
+                    else os.path.basename(caminho_origem)
+                new_name = nome_original if prefix in nome_original else f"{prefix}_{nome_original}"
+                nome_arquivo = secure_filename(new_name)
+                if nome_arquivo in anexos_salvos:   # mesmo arquivo já enviado pelo usuário
+                    continue
+
+                upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], prefix)
+                os.makedirs(upload_folder, exist_ok=True)
+                caminho_arquivo = os.path.join(upload_folder, nome_arquivo)
+                shutil.copy2(caminho_origem, caminho_arquivo)
+
+                db.session.add(Anexo(
+                    nome_arquivo=nome_arquivo,
+                    endereco=caminho_arquivo,
+                    tamanho_arquivo=os.path.getsize(caminho_arquivo),
+                    tipo_mime=mimetypes.guess_type(nome_arquivo)[0] or "application/octet-stream",
+                    id_estudo=id_estudo_novo
+                ))
+                anexos_salvos.append(nome_arquivo)
+
             db.session.commit()
+            session.pop(SESSAO_ANEXOS_ORIGEM, None)
             registrar_log('criar_estudo', 'estudo', id_estudo_novo,
                           f'Cadastrou o estudo {num_doc} - {novo_estudo.nome_projeto}')
             for nome_anexo in anexos_salvos:
@@ -309,7 +364,7 @@ def cadastro_estudo():
     erros_campos = [f for f in form.errors if f != 'csrf_token']
     return render_template('cadastro/cadastrar_estudo.html', form=form,
                            datetime=datetime, timedelta=timedelta,
-                           erros_campos=erros_campos)
+                           erros_campos=erros_campos, anexos_origem=anexos_origem)
 
 @cadastro_bp.route("/estudos/ia/upload", methods=["POST"])
 @requires_permission('criar')
@@ -353,6 +408,9 @@ def upload_ddpe_ia():
     # guarda na sessão para usar no cadastro
     session["ia_prefill_estudo"] = dados_ia
     session["ia_prefill_nome_pdf"] = nome_seguro
+    # não reaproveitar anexos de uma Nota aberta antes
+    from app.analises_ovs_notas.routes import SESSAO_ANEXOS_ORIGEM
+    session.pop(SESSAO_ANEXOS_ORIGEM, None)
 
     print('Resultado LLM:')
     print(dados_ia)
