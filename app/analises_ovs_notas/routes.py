@@ -53,21 +53,18 @@ SUFIXO_DESCRICAO = "_descricao.txt"
 # TEMPORÁRIO: depois mover para o .env (ex.: DOCS_BASE)
 #   Nome da pasta, relativa à raiz do projeto (pasta acima de "app"):
 #   Atlas/docs_novas_ovs_notas/docs_notas e Atlas/docs_novas_ovs_notas/docs_ovs
-#   (o nome da pasta raiz não importa: o caminho é resolvido a partir da pasta "app")
+#   (o nome da pasta raiz não importa: mesma lógica do tipo_solicitacao)
 DOCS_BASE_TEMP = "docs_novas_ovs_notas"
 
 SUBPASTAS = {"nota": "docs_notas", "ov": "docs_ovs"}
 
-# Pasta "app" = pasta acima deste arquivo (app/analises_ovs_notas/routes.py -> app)
-APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 def _upload_folder(tipo):
     """ Pasta base dos documentos. Os CAMINHO_DOC no banco são relativos a ela
     (ex.: '45006425374/45006425374_descricao.txt').
-    Parte da pasta "app", volta uma pasta (..) e entra em docs_novas_ovs_notas:
-    .../app/../docs_novas_ovs_notas/docs_notas (ou docs_ovs) """
-    pasta = os.path.join(APP_DIR, "..", DOCS_BASE_TEMP, SUBPASTAS[tipo])
-    return os.path.normpath(pasta).replace("\\", "/")
+    Mesma lógica do tipo_solicitacao: current_app.root_path = .../app/main,
+    sobe 2 níveis = raiz do projeto, e entra em docs_novas_ovs_notas/<subpasta>. """
+    dir = os.path.join(os.path.dirname(os.path.dirname(current_app.root_path))).replace('\\', '/')
+    return os.path.join(dir, DOCS_BASE_TEMP, SUBPASTAS[tipo]).replace('\\', '/')
 # --- TEMPORÁRIO --- #
 
 
